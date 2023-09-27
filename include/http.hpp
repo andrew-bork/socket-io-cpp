@@ -1,12 +1,13 @@
-#pragma once
+#ifndef HTTP_DEFINED
+#define HTTP_DEFINED
+
 #include <string>
 #include <unordered_map>
 #include <iostream>
 #include <queue>
 
-#include <socket.hpp>
-#include <url.hpp>
-// #include <regex>
+#include "socket.hpp"
+#include "url.hpp"
 
 namespace http {
 
@@ -47,22 +48,6 @@ namespace http {
         std::string prev_unused_token = "";
 
         bool parse(const std::string& response_string);
-    };
-
-    struct request_parser {
-        enum State {
-            REQUEST_LINE,
-            HEADERS,
-            BODY,
-            DONE
-        } state = REQUEST_LINE;
-
-        http::request request;
-
-        std::string unparsed = "";
-        bool is_metadata_done();
-        bool is_done();
-        bool parse(const std::string& str);
     };
 
     std::string curl(const std::string url_string);
@@ -266,94 +251,4 @@ bool http::response_parser::parse(const std::string& response_string) {
 
 }
 
-
-bool http::request_parser::is_done() {
-    return state == DONE;
-}
-
-bool http::request_parser::is_metadata_done() {
-    return state == BODY || state == DONE;
-}
-
-
-static void parse_request_line(const std::string& str, http::request& out) {
-    size_t i = 0;
-    size_t j = str.find(' ');
-    std::string method = str.substr(i, j - i);
-    i = j + 1;
-    j = str.find(' ', i);
-    std::string path = str.substr(i, j - i);
-    i = j + 1;
-    std::string version = str.substr(i);
-
-    // std::cout << "Version: " << version << " Path: " << path << " Method: " << method << std::endl;
-
-    out.version = out.version;
-    out.type = parse_request_type(method);
-    out.url = url::parse_absolute_path(path);
-}
-
-bool http::request_parser::parse(const std::string& str) {
-    size_t i = 0;
-    bool running = true;
-    while (running) {
-        running = false;
-        size_t j;
-        
-        unparsed += str;
-        switch(state) {
-        case REQUEST_LINE:
-            j = unparsed.find("\r\n");
-            if(j != std::string::npos) {
-                std::string req_line = unparsed.substr(i, j - i);
-                
-                parse_request_line(req_line, request);
-
-                unparsed = unparsed.substr(j+2);
-                i = 0;
-                state = HEADERS;
-            }
-            break;
-        case HEADERS:
-            j = unparsed.find("\r\n");
-            if(j != std::string::npos) {
-                std::string header_line = unparsed.substr(i, j - i);
-                if(header_line.empty()) {
-                    std::cout << "END OF HEADERS" << std::endl;
-                    state = BODY;
-                }else {
-                    size_t k = header_line.find(":");
-                    std::string key = header_line.substr(0, k), val = header_line.substr(k+1);
-                    // std::cout << key << ": " << val << std::endl;
-
-                    request.headers[key] = val;
-                }
-
-                unparsed = unparsed.substr(j+2);
-                i = 0;
-            }
-            break;
-        case BODY:
-            // std::cout << std::endl << "unparsde:: " << unparsed << std::endl;
-            j = unparsed.find("\r\n\r\n");
-            if(j != std::string::npos) {
-                request.body += unparsed.substr(0, j);
-                state = DONE;
-                return true;
-            }else {
-                request.body += unparsed.substr(0, unparsed.size()-4);
-                unparsed = unparsed.substr(unparsed.size()-4, 4);
-                i = 0;
-                return true;
-            }
-            break;
-        case DONE:
-            return true;
-        default:
-            break;
-        };
-
-    }
-
-    return state == BODY || state == DONE;
-}
+#endif

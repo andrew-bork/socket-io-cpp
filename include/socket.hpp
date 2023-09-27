@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SOCKET_DEFINED
+#define SOCKET_DEFINED
 
 #include <errno.h>
 #include <sys/socket.h>
@@ -443,6 +444,7 @@ std::unique_ptr<net::socket> net::connect(const char * path) {
     sockaddr_un addr;
     addr.sun_family = AF_UNIX;
     strncpy(addr.sun_path, path, sizeof(addr.sun_path));
+    
 
     int fd = ::socket(AF_UNIX, SOCK_STREAM, 0);
     if(fd < 0) {
@@ -569,3 +571,5 @@ void net::event_loop::join() {
         thread.join();
     }
 }
+
+#endif

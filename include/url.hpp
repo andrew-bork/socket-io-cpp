@@ -1,4 +1,5 @@
-#pragma once
+#ifndef URL_DEFINED
+#define URL_DEFINED
 
 #include <string>
 #include <unordered_map>
@@ -436,3 +437,5 @@ std::optional<url> url::parse(const std::string& url_string) {
 
     return returned;
 }
+
+#endif
