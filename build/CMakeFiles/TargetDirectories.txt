@@ -1,9 +1,0 @@
-/Users/borky/Documents/Projects/SocketIO-cpp/build/CMakeFiles/server.dir
-/Users/borky/Documents/Projects/SocketIO-cpp/build/CMakeFiles/client.dir
-/Users/borky/Documents/Projects/SocketIO-cpp/build/CMakeFiles/http.dir
-/Users/borky/Documents/Projects/SocketIO-cpp/build/CMakeFiles/parse.dir
-/Users/borky/Documents/Projects/SocketIO-cpp/build/CMakeFiles/hserv.dir
-/Users/borky/Documents/Projects/SocketIO-cpp/build/CMakeFiles/package.dir
-/Users/borky/Documents/Projects/SocketIO-cpp/build/CMakeFiles/package_source.dir
-/Users/borky/Documents/Projects/SocketIO-cpp/build/CMakeFiles/edit_cache.dir
-/Users/borky/Documents/Projects/SocketIO-cpp/build/CMakeFiles/rebuild_cache.dir

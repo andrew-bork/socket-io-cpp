@@ -1,2 +1,0 @@
-/usr/bin/ar qc libsocket-io-cpp.a "CMakeFiles/socket-io-cpp.dir/socket-io-cpp.cpp.o"
-/usr/bin/ranlib libsocket-io-cpp.a

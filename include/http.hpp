@@ -6,37 +6,10 @@
 #include <iostream>
 #include <queue>
 
-#include "socket.hpp"
+#include "net/net.hpp"
 #include "url.hpp"
 
 namespace http {
-
-    struct request {
-        enum request_type {
-            GET, POST
-        } type = GET;
-
-        url url;
-
-        std::string version = "HTTP/1.1";
-        std::unordered_map<std::string, std::string> headers;
-        std::string body = "";
-
-        static http::request parse(const std::string& response_string);
-        std::string build() const;
-    };
-    struct response {
-
-        std::string version = "";
-        std::string status_reason = "";
-        std::string status_code = "";
-        std::string body = "";
-        std::unordered_map<std::string, std::string> headers;
-        
-
-        static response parse(const std::string& response_string);
-    };
-
     struct response_parser {
         response response;
 
@@ -200,30 +173,30 @@ static void parse_headers(size_t& i, const std::string& str, std::unordered_map<
         headers[key] = val;
     }
 }
-http::request http::request::parse(const std::string& req_str) {
-    size_t i = 0;
-    http::request out;
-    parse_request_line(i, req_str, out);
+// http::request http::request::parse(const std::string& req_str) {
+//     size_t i = 0;
+//     http::request out;
+//     parse_request_line(i, req_str, out);
 
-    parse_headers(i, req_str, out.headers);
+//     parse_headers(i, req_str, out.headers);
     
-    out.body = req_str.substr(i);
-    // std::cout << "v: " << out.version << " code: " << out.status_code << " reason: " << out.status_reason << std::endl;
+//     out.body = req_str.substr(i);
+//     // std::cout << "v: " << out.version << " code: " << out.status_code << " reason: " << out.status_reason << std::endl;
 
-    return out;
-}
-http::response http::response::parse(const std::string& response_string) {
-    size_t i = 0;
-    http::response out;
-    parse_status_line(i, response_string, out);
+//     return out;
+// }
+// http::response http::response::parse(const std::string& response_string) {
+//     size_t i = 0;
+//     http::response out;
+//     parse_status_line(i, response_string, out);
 
-    parse_headers(i, response_string, out.headers);
+//     parse_headers(i, response_string, out.headers);
     
-    std::cout << "v: " << out.version << " code: " << out.status_code << " reason: " << out.status_reason << std::endl;
+//     std::cout << "v: " << out.version << " code: " << out.status_code << " reason: " << out.status_reason << std::endl;
 
-    out.body = response_string.substr(i);
-    return out;
-}
+//     out.body = response_string.substr(i);
+//     return out;
+// }
 
 // static std::optional<std::string> next_token(size_t& i, const std::string& response_string) {
 //     size_t old_i = i;
@@ -247,7 +220,7 @@ bool http::response_parser::parse(const std::string& response_string) {
     // auto next_token = next_token_newline(i, response_string)
     
 
-    return false;
+    return true;
 
 }
 
