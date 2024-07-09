@@ -12,14 +12,14 @@ int main(int argc, char ** argv) {
     // std::vector<std::shared_ptr<net::socket>> conns;
 
     // net::event_loop ev;
-    printf("POSIX:%d\n", __POSIX_VISIBLE);
+    // printf("POSIX:%d\n", __POSIX_VISIBLE);
 
 
     
     net::event_loop loop;
 
     for(int i = 0; i < n_connections; i ++) {
-        std::shared_ptr<net::socket> a = net::connect("www.google.com", "10");
+        std::shared_ptr<net::socket> a = net::connect("www.example.com", "80");
         a->on(net::socket::events::DATA, [] (std::string s) {
             std::cout << "Server: " << s << std::endl;
         });
@@ -30,6 +30,7 @@ int main(int argc, char ** argv) {
         // ev.add(a);
         loop.add(a);
     }
+    std::cout << "Starting Loop" << std::endl;
     loop.run();
     // while(true);
     // ev.start();

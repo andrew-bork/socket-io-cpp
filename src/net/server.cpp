@@ -37,16 +37,13 @@ net::server& net::server::on(net::server::events event, net::server::on_listen_h
     return *this;
 }
 
+void net::server::listen(int backlog) {
+    int& server_fd = server->fd();
 
-
-
-void net::server::listen_threaded(int backlog) {
-    // thread = new std::thread(listen_block, *this, backlog);
-}
-
-
-void net::server::listen_block(int backlog) {
-    // ::listen_block(this, backlog);
+    int success = ::listen(server_fd, backlog);
+    if(success < 0) {
+        throw std::runtime_error("Couldn't listen.");
+    }
 }
 
 

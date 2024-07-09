@@ -17,7 +17,6 @@ namespace net {
         socket _socket;
 
         bool listening = false;
-        std::thread * thread;
         // std::unordered_map<int, int> fd_to_socket; // fd -> index -> socket* 
         // server(int fd);
 
@@ -31,11 +30,12 @@ namespace net {
             std::vector<on_listen_handler> on_listen;
         } handlers;
 
+        std::vector<s
+
         server(int fd);
         ~server();
 
-        void listen_threaded(int backlog = 16);
-        void listen_block(int backlog = 16);
+        void listen(int backlog = 16);
 
         net::server& on(events event, std::function<void(net::socket&)> handler);
         net::server& on(events event, std::function<void()> handler);

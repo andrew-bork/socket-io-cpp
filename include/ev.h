@@ -832,6 +832,7 @@ EV_API_DECL void ev_async_send     (EV_P_ ev_async *w) EV_THROW;
   #define EVUNLOOP_ONE    EVBREAK_ONE
   #define EVUNLOOP_ALL    EVBREAK_ALL
   #if EV_PROTOTYPES
+    typedef struct ev_loop ev_loop_struct;
     EV_INLINE void ev_loop   (EV_P_ int flags) { ev_run   (EV_A_ flags); }
     EV_INLINE void ev_unloop (EV_P_ int how  ) { ev_break (EV_A_ how  ); }
     EV_INLINE void ev_default_destroy (void) { ev_loop_destroy (EV_DEFAULT); }
