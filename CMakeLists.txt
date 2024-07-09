@@ -5,8 +5,13 @@ set(CMAKE_CXX_STANDARD 23)
 
 project(socket-io-cpp)
 
-add_library(net src/net/socket.cpp src/net/server.cpp src/net/net.cpp)
-target_link_libraries(net ${CMAKE_SOURCE_DIR}/lib/libev.a)
+# file(GLOB LIBEV_SRC ${CMAKE_SOURCE_DIR}/libev/*.c)
+# add_library(ev ${LIBEV_SRC})
+# target_include_directories(ev PUBLIC ${CMAKE_SOURCE_DIR}/libev/)
+
+FILE(GLOB NET_SRC src/net/*.cpp)
+add_library(net ${NET_SRC})
+target_link_libraries(net ${CMAKE_SOURCE_DIR}/libev/.libs/libev.a)
 
 FILE(GLOB HTTP_SRC src/http/*.cpp)
 add_library(http ${HTTP_SRC})
@@ -15,8 +20,8 @@ target_link_libraries(http net)
 
 add_executable(server tests/server.cpp)
 target_link_libraries(server net)
-# add_executable(client tests/client.cpp)
-# target_link_libraries(client net)
+add_executable(client tests/client.cpp)
+target_link_libraries(client net)
 # add_executable(http tests/http_test.cpp)
 # add_executable(parse tests/parse.cpp)
 # add_executable(hserv tests/http_server.cpp)

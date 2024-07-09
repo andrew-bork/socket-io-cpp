@@ -2,7 +2,7 @@
 
 std::string http::request::build() const {
     std::string out = "";
-    out += get_request_type(type);
+    // out += get_request_type(type);
     out += " ";
     out += url.path.value_or("/");
 

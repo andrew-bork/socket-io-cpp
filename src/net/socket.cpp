@@ -6,7 +6,7 @@
 #include <sys/un.h>
 #include <unistd.h>
 #include <poll.h>
-
+#include <stdexcept>
 
 #define chk_bit(a,b) ((a&b) == b)
 
@@ -73,7 +73,7 @@ size_t net::socket::operator>>(std::string& string) {
 
     while(chk_bit(_pollfd.revents, POLLIN)) {
         
-        size_t s = recv(fd, buf, 4095, 0);
+        ssize_t s = recv(fd, buf, 4095, 0);
         if(s == -1) {
             throw std::runtime_error("Recv failed");
         }

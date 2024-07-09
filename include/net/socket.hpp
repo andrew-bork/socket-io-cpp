@@ -31,6 +31,5 @@ namespace net {
 
         size_t operator>>(std::string& string);
         size_t operator<<(const std::string string);
-
     };
 };

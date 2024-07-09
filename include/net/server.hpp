@@ -7,11 +7,12 @@
 #include <sys/un.h>
 #include <netdb.h>
 #include <netinet/in.h>
-
+#include <thread> 
 namespace net {
     struct server {
         
         typedef std::function<void(net::socket&)> on_connect_handler;
+        typedef std::function<void(void)> on_listen_handler;
 
         socket _socket;
 
@@ -25,8 +26,10 @@ namespace net {
             LISTEN,
         };
 
-        std::vector<on_connect_handler> on_connect_handlers;
-        std::vector<std::function<void()>> on_listen_handlers;
+        struct {
+            std::vector<on_connect_handler> on_connect;
+            std::vector<on_listen_handler> on_listen;
+        } handlers;
 
         server(int fd);
         ~server();
@@ -38,5 +41,8 @@ namespace net {
         net::server& on(events event, std::function<void()> handler);
 
         int& fd();
+
+        // For event Loops
+        void process();
     };
 };

@@ -33,5 +33,5 @@ http::response http::get(const http::request req) {
     *sock << req.build();
     // ev.add(sock);
     // ev.start();
-    return out;
+    return http::response();
 }

@@ -1,4 +1,71 @@
 #include "http/parser.hpp"
+#include <iostream>
+
+static bool is_alpha(const char& c) {
+    return ('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z');
+}
+
+static bool is_num(const char& c) {
+    return '0' <= c && c <= '9';
+}
+
+static bool is_unreserved(const char& c) {
+    return is_alpha(c) || is_num(c) || c == '-' || c == '.' || c == '_' || c == '~';
+}
+
+// static bool is_gen_delim(const char& c) {
+//     return c == ':' || c == '/' || c == '?' || c == '#' || c == '[' || c == ']' || c == '@';
+// }
+
+static bool is_sub_delim(const char& c) {
+    return c == '!' || c == '$' || c == '&' || c ==  '\'' || c ==  '(' || c ==  ')' || c ==  '*' || c ==  '+' || c ==  ',' || c ==  ';' || c ==  '=';
+}
+
+// static bool is_reserved(const char& c) {
+//     return is_sub_delim(c) || is_sub_delim(c);
+// }
+
+
+static void to_lowercase(std::string& s) {
+    for(size_t i = 0; i < s.size(); i ++) {
+        char& curr = s[i];
+        if('A' <= curr && curr <= 'Z') s[i] = curr - 'A' + 'a';
+    }
+}
+
+
+static std::string parse_up_to_char(size_t& i, const std::string& response_string, char c) {
+    std::string out = "";
+    while(i < response_string.size()) {
+        if(response_string[i] == c) {
+            i++;
+            return out;
+        }else {
+            out += response_string[i];
+            i++;
+        }
+    }
+    return out;
+}
+
+static std::string parse_up_to_CRLF(size_t& i, const std::string& response_string) {
+    std::string out = "";
+    while(i+1 < response_string.size()) {
+        if(response_string[i] == '\r' && response_string[i+1] == '\n') {
+            i+=2;
+            return out;
+        }else {
+            out += response_string[i];
+            i++;
+        }
+    }
+    if(i < response_string.size()) {
+        out += response_string[i];
+        i++;
+    }
+    return out;
+}
+
 
 bool http::request_parser::is_done() {
     return state == DONE;
@@ -34,38 +101,6 @@ static void parse_headers(size_t& i, const std::string& str, std::unordered_map<
         std::string val = parse_up_to_CRLF(i, str);
         headers[key] = val;
     }
-}
-
-static std::string parse_up_to_char(size_t& i, const std::string& response_string, char c) {
-    std::string out = "";
-    while(i < response_string.size()) {
-        if(response_string[i] == c) {
-            i++;
-            return out;
-        }else {
-            out += response_string[i];
-            i++;
-        }
-    }
-    return out;
-}
-
-static std::string parse_up_to_CRLF(size_t& i, const std::string& response_string) {
-    std::string out = "";
-    while(i+1 < response_string.size()) {
-        if(response_string[i] == '\r' && response_string[i+1] == '\n') {
-            i+=2;
-            return out;
-        }else {
-            out += response_string[i];
-            i++;
-        }
-    }
-    if(i < response_string.size()) {
-        out += response_string[i];
-        i++;
-    }
-    return out;
 }
 
 static void parse_status_line(size_t& i, const std::string& response_string, http::response& response) {

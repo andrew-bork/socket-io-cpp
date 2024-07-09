@@ -1,6 +1,7 @@
 
 #include <net/net.hpp>
 #include <poll.h>
+#include <stdexcept>
 
 int& net::server::fd() {
     return _socket.fd;
@@ -13,10 +14,11 @@ net::server::server(int _fd) : _socket(_fd) {
 net::server::~server() {
 
 }
-net::server& net::server::on(net::server::events event, std::function<void(socket&)> handler) {
+
+net::server& net::server::on(net::server::events event, net::server::on_connect_handler handler) {
     switch(event) {
     case CONNECT:
-        on_connect_handlers.push_back(handler);
+        handlers.on_connect.push_back(handler);
         break;
     default:
         throw std::runtime_error("\"CONNECT\" listener has the wrong type");
@@ -24,10 +26,10 @@ net::server& net::server::on(net::server::events event, std::function<void(socke
     return *this;
 }
 
-net::server& net::server::on(net::server::events event, std::function<void()> handler) {
+net::server& net::server::on(net::server::events event, net::server::on_listen_handler handler) {
     switch(event) {
     case LISTEN:
-        on_listen_handlers.push_back(handler);
+        handlers.on_listen.push_back(handler);
         break;
     default:
         throw std::runtime_error("\"LISTEN\" listener has the wrong type");
@@ -102,6 +104,7 @@ size_t clean_up_dead_sockets(std::vector<std::shared_ptr<net::socket>>& sockets,
 
     return i;
 }
+
 
 
 // void listen_block(net::server* server, int& backlog) {
