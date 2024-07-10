@@ -20,7 +20,7 @@ void* get_in_addr(sockaddr *s) {
 
 
 
-std::unique_ptr<net::socket> net::connect(const char * address, const char * port) {
+net::socket&& net::connect(const char * address, const char * port) {
     addrinfo hints;
     addrinfo *results;
 
@@ -68,16 +68,16 @@ std::unique_ptr<net::socket> net::connect(const char * address, const char * por
         throw std::runtime_error("Couldn't connect");
     }
 
-    return std::make_unique<net::socket>(fd);
+    return net::socket(fd);
 }
 
-std::unique_ptr<net::socket> net::connect(const char * addr, int port) {
+net::socket&& net::connect(const char * addr, int port) {
     char buf[6];
     snprintf(buf, 6, "%d", port);
     return net::connect(addr, buf);
 }
 
-std::unique_ptr<net::socket> net::connect(const char * path) {
+net::socket&& net::connect(const char * path) {
     sockaddr_un addr;
     addr.sun_family = AF_UNIX;
     strncpy(addr.sun_path, path, sizeof(addr.sun_path));
@@ -93,7 +93,7 @@ std::unique_ptr<net::socket> net::connect(const char * path) {
         throw std::runtime_error("Couldn't connect");
     }
 
-    return std::make_unique<net::socket>(fd);
+    return net::socket(fd);
 }
 
 

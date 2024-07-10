@@ -6,11 +6,11 @@
 #include <net/server.hpp>
 
 namespace net {
-    std::unique_ptr<server> create_server(const char * path);
-    std::unique_ptr<server> create_server(int port);
+    net::server&& create_server(const char * path);
+    net::server&& create_server(int port);
 
 
-    std::unique_ptr<socket> connect(const char * address, const char * port);
-    std::unique_ptr<socket> connect(const char * address, int port);
-    std::unique_ptr<socket> connect(const char * path);
+    net::socket&& connect(const char * address, const char * port);
+    net::socket&& connect(const char * address, int port);
+    net::socket&& connect(const char * path);
 };

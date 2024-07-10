@@ -8,6 +8,8 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <thread> 
+#include <list>
+
 namespace net {
     struct server {
         
@@ -26,11 +28,11 @@ namespace net {
         };
 
         struct {
-            std::vector<on_connect_handler> on_connect;
-            std::vector<on_listen_handler> on_listen;
+            std::list<on_connect_handler> on_connect;
+            std::list<on_listen_handler> on_listen;
         } handlers;
 
-        std::vector<s
+        std::list<net::socket> _connections;
 
         server(int fd);
         ~server();
