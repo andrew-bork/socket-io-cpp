@@ -25,12 +25,12 @@ http::response http::get(const http::request req) {
     if(!req.url.domain.has_value()) throw std::runtime_error("URL has no domain.");
 
     // net::event_loop ev;
-    std::shared_ptr<net::socket> sock = net::connect(req.url.domain.value().c_str(), req.url.port.value_or("80").c_str());
+    auto sock = net::connect(req.url.domain.value().c_str(), req.url.port.value_or("80").c_str());
     std::string out = "";
-    sock->on(net::socket::DATA,[&](std::string chk) {
+    sock.on(net::socket::DATA,[&](std::string chk) {
         out += chk;
     });
-    *sock << req.build();
+    sock << req.build();
     // ev.add(sock);
     // ev.start();
     return http::response();

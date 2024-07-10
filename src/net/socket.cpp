@@ -75,6 +75,7 @@ size_t net::socket::operator>>(std::string& string) {
         
         ssize_t s = recv(fd, buf, 4095, 0);
         if(s == -1) {
+            perror("huh?");
             throw std::runtime_error("Recv failed");
         }
 
@@ -89,4 +90,31 @@ size_t net::socket::operator>>(std::string& string) {
     }
 
     return string.size();
+}
+
+#include <iostream>
+
+
+net::socket::socket(const net::socket& other) {
+    std::cout << "copying socket\n";
+    fd = dup(other.fd);
+    if(fd == -1) throw std::runtime_error("dup() failed.");
+}
+
+net::socket::socket(net::socket&& other) {
+    std::cout << "moving socket\n";
+    fd = other.fd;
+    other.fd = -1;
+}
+
+net::socket& net::socket::operator=(net::socket&& other) {
+    std::cout << "moving socket\n";
+    fd = other.fd;
+    other.fd = -1;
+}
+net::socket& net::socket::operator=(const net::socket& other) {
+    std::cout << "copying socket\n";
+
+    fd = dup(other.fd);
+    if(fd == -1) throw std::runtime_error("dup() failed.");
 }

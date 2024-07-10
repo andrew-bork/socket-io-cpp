@@ -38,7 +38,7 @@ net::server& net::server::on(net::server::events event, net::server::on_listen_h
 }
 
 void net::server::listen(int backlog) {
-    int& server_fd = server->fd();
+    int& server_fd = fd();
 
     int success = ::listen(server_fd, backlog);
     if(success < 0) {
@@ -48,7 +48,7 @@ void net::server::listen(int backlog) {
 
 
 
-std::unique_ptr<net::server> net::create_server(const char * path) {
+net::server net::create_server(const char * path) {
     sockaddr_un addr;
     addr.sun_family = AF_UNIX;
     strncpy(addr.sun_path, path, sizeof(addr.sun_path));
@@ -63,10 +63,10 @@ std::unique_ptr<net::server> net::create_server(const char * path) {
         throw std::runtime_error("Couldn't connect");
     }
 
-    return std::make_unique<net::server>(fd);
+    return net::server(fd);
 }
 
-std::unique_ptr<net::server> net::create_server(int port) {
+net::server net::create_server(int port) {
     sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = INADDR_ANY;
@@ -83,7 +83,7 @@ std::unique_ptr<net::server> net::create_server(int port) {
         throw std::runtime_error("Couldn't bind");
     }
     
-    return std::make_unique<net::server>(fd);
+    return net::server(fd);
 }
 
 
@@ -103,6 +103,29 @@ size_t clean_up_dead_sockets(std::vector<std::shared_ptr<net::socket>>& sockets,
 }
 
 
+
+
+net::server::server(const net::server& other) : _socket(other._socket), _connections(other._connections), listening(other.listening) {
+
+}
+
+net::server::server(net::server&& other) : _socket(std::move(other._socket)), _connections(std::move(other._connections)), listening(other.listening) {
+    other.listening = false;
+}
+
+
+net::server& net::server::operator=(const net::server& other) {
+    _socket = other._socket;
+    _connections = other._connections;
+    listening = other.listening;
+}
+
+net::server& net::server::operator=(net::server&& other) {
+    _socket = std::move(other._socket);
+    _connections = std::move(other._connections);
+    listening = other.listening;
+    other.listening = false;
+}
 
 // void listen_block(net::server* server, int& backlog) {
 //     int& server_fd = server->fd();

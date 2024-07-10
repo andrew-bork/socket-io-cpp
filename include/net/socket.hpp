@@ -16,6 +16,8 @@ namespace net {
         };
 
         socket(int _fd);
+        socket(const socket& other);
+        socket(socket&& other);
         ~socket();
 
         
@@ -31,5 +33,8 @@ namespace net {
 
         size_t operator>>(std::string& string);
         size_t operator<<(const std::string string);
+    
+        net::socket& operator=(net::socket&&);
+        net::socket& operator=(const net::socket&);
     };
 };

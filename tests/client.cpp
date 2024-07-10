@@ -1,6 +1,7 @@
 #include <net/net.hpp>
 #include <net/event_loop.hpp>
 
+#include <list>
 #include <iostream>
 
 int main(int argc, char ** argv) {
@@ -18,15 +19,17 @@ int main(int argc, char ** argv) {
     
     net::event_loop loop;
 
+    std::list<net::socket> connections;
+
     for(int i = 0; i < n_connections; i ++) {
-        std::shared_ptr<net::socket> a = net::connect("www.example.com", "80");
-        a->on(net::socket::events::DATA, [] (std::string s) {
+        auto& a = connections.emplace_back(net::connect("localhost", "3000"));
+        a.on(net::socket::events::DATA, [] (std::string s) {
             std::cout << "Server: " << s << std::endl;
         });
-        a->on(net::socket::DISCONNECT, []() {
+        a.on(net::socket::DISCONNECT, []() {
             std::cout << "welp\n";
         });
-        (*a) << "GET / HTTP/1.0\r\n\r\n";
+        a << "GET / HTTP/1.0\r\n\r\n";
         // ev.add(a);
         loop.add(a);
     }

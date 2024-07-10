@@ -20,7 +20,7 @@ void* get_in_addr(sockaddr *s) {
 
 
 
-net::socket&& net::connect(const char * address, const char * port) {
+net::socket net::connect(const char * address, const char * port) {
     addrinfo hints;
     addrinfo *results;
 
@@ -71,13 +71,13 @@ net::socket&& net::connect(const char * address, const char * port) {
     return net::socket(fd);
 }
 
-net::socket&& net::connect(const char * addr, int port) {
+net::socket net::connect(const char * addr, int port) {
     char buf[6];
     snprintf(buf, 6, "%d", port);
     return net::connect(addr, buf);
 }
 
-net::socket&& net::connect(const char * path) {
+net::socket net::connect(const char * path) {
     sockaddr_un addr;
     addr.sun_family = AF_UNIX;
     strncpy(addr.sun_path, path, sizeof(addr.sun_path));
