@@ -61,35 +61,17 @@ size_t net::socket::operator<<(const std::string string) {
 size_t net::socket::operator>>(std::string& string) {
     string = "";
     char buf[4096];
-    
-    pollfd _pollfd;
-    _pollfd.fd = fd;
-    _pollfd.events = POLLIN;
 
-    int success = poll(&_pollfd, 1, -1);
-    if(success < 0) {
-        throw std::runtime_error("Poll failed");
-    } 
-
-    while(chk_bit(_pollfd.revents, POLLIN)) {
-        
-        ssize_t s = recv(fd, buf, 4095, 0);
-        if(s == -1) {
-            perror("huh?");
-            throw std::runtime_error("Recv failed");
-        }
-
-        buf[s] = '\0';
-        
-        string += buf;
-
-        success = poll(&_pollfd, 1, 0);
-        if(success == -1) {
-            throw std::runtime_error("Poll failed");
-        }
+    ssize_t s = recv(fd, buf, 4095, 0);
+    if(s == -1) {
+        perror("huh?");
+        throw std::runtime_error("Recv failed");
     }
+    
+    buf[s] = '\0';
+    string = std::string(buf);
 
-    return string.size();
+    return s;
 }
 
 #include <iostream>

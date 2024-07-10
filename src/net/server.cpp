@@ -44,6 +44,8 @@ void net::server::listen(int backlog) {
     if(success < 0) {
         throw std::runtime_error("Couldn't listen.");
     }
+
+    listening = true;
 }
 
 

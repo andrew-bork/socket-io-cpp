@@ -37,6 +37,10 @@ int main() {
             std::cout << "Client: " << data << std::endl;
             socket << "Pong!";
         });
+
+        socket.on(net::socket::events::DISCONNECT, [] () {
+            std::cout << "Goodbye\n";
+        });
     });
 
 
