@@ -265,7 +265,6 @@ bool http::response_parser::parse(const std::string& str) {
             default:
                 break;
         }
-        return false;
     }
 
     return false;
