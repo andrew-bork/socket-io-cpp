@@ -49,7 +49,8 @@ int main(int argc, char ** argv) {
     net::socket a = net::connect("www.google.com", "80");
     a.on(net::socket::events::DATA, [&] (std::string s) {
         std::cout << "Server: " << s.length() << " bytes" << std::endl;
-        debug_print(s.substr(s.length()-50));
+        debug_print(s.substr(0, 50));
+        // debug_print(s.substr(s.length()-50));
         std::cout << "\n";
         parser.parse(s);
     });

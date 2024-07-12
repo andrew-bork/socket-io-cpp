@@ -3,23 +3,29 @@
 #include "util/string.hpp"
 #include <stdexcept>
 
-static bool is_alpha(const char& c) {
+static bool is_alpha(char c) {
     return ('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z');
 }
 
-static bool is_num(const char& c) {
+static bool is_num(char c) {
     return '0' <= c && c <= '9';
 }
 
-static bool is_unreserved(const char& c) {
+static bool is_unreserved(char c) {
     return is_alpha(c) || is_num(c) || c == '-' || c == '.' || c == '_' || c == '~';
 }
+
+static bool is_visible_ascii(char c) {
+    return '!' <= c && c <= '~';
+}
+
+
 
 // static bool is_gen_delim(const char& c) {
 //     return c == ':' || c == '/' || c == '?' || c == '#' || c == '[' || c == ']' || c == '@';
 // }
 
-static bool is_sub_delim(const char& c) {
+static bool is_sub_delim(char c) {
     return c == '!' || c == '$' || c == '&' || c ==  '\'' || c ==  '(' || c ==  ')' || c ==  '*' || c ==  '+' || c ==  ',' || c ==  ';' || c ==  '=';
 }
 
@@ -248,8 +254,18 @@ bool http::response_parser::parse(const std::string& str) {
                     state = STATUS_REASON;
                 }
                 break;
-
+            case STATUS_REASON:
+                if(status_reason_parser.parse(c)) {
+                    std::cout << "Reason: " << status_reason_parser.reason << "\n";
+                    state = HEADER;
+                }
+            case HEADER:
+            case BODY:
+            case DONE:
+            default:
+                break;
         }
+        return false;
     }
 
     return false;
@@ -441,6 +457,31 @@ bool http::status_code_parser::parse(char c) {
                 return true;
             }
             throw std::runtime_error("Expected digit or '.', got 'C'");
+        case DONE:
+            return true;
+    }
+    return false;
+}
+
+bool http::status_reason_parser::parse(char c) {
+    switch(state){
+        case EXPECT_TEXT_OR_CR:
+            if(c == '\r') {
+                state = EXPECT_LF;
+                return false;
+            }
+            if(is_visible_ascii(c) || c == '\t' || c == ' ') {
+                reason.push_back(c);
+                return false;
+            }
+            throw std::runtime_error("Invalid status reason character.");
+        case EXPECT_LF:
+            if(c == '\n') {
+                state = DONE;
+                return true;
+            }
+            throw std::runtime_error("\\r not followed by \\n");
+
         case DONE:
             return true;
     }

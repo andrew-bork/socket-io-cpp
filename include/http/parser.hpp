@@ -64,17 +64,14 @@ namespace http {
         bool parse(char c);
     };
 
-    struct status_line_parser {
+    struct status_reason_parser {
         enum {
             EXPECT_TEXT_OR_CR,
-            EXPECT_CR,
             EXPECT_LF,
             DONE
-        } state = EXPECT_DIGIT;
+        } state = EXPECT_TEXT_OR_CR;
 
-        std::string token = "";
-        int status_code = 0;
-
+        std::string reason = "";
         bool parse(char c);
     };
 
@@ -129,7 +126,7 @@ namespace http {
         private:
             version_parser version_parser;
             status_code_parser status_code_parser;
-            // status_code_parser
+            status_reason_parser status_reason_parser;
 
     };
 }
