@@ -1,4 +1,4 @@
-#include "http/url.hpp"
+#include "url/url.hpp"
 
 
 percent_encoding_error::percent_encoding_error(size_t i, std::string parsed_string) : parse_error(i, parsed_string, "Invalid percent-escaped sequence.") {}
@@ -335,7 +335,7 @@ static std::optional<std::string> parse_fragment(size_t& i, const std::string& u
 // }
 
 
-url url::parse_absolute_path(const std::string& str) {
+url::url url::url::parse_absolute_path(const std::string& str) {
     url out;
     size_t i = 0;
 
@@ -350,7 +350,7 @@ url url::parse_absolute_path(const std::string& str) {
     return out;
 }
 
-std::optional<url> url::parse(const std::string& url_string) {
+url::url url::parse(const std::string& url_string) {
     // https://video.google.co.uk:80/videoplay?docid=-7234293487129834&hl=en#00h02m30s
     url returned;
 

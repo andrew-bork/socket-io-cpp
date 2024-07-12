@@ -1,5 +1,7 @@
 #include "http/parser.hpp"
 #include <iostream>
+#include "util/string.hpp"
+#include <stdexcept>
 
 static bool is_alpha(const char& c) {
     return ('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z');
@@ -71,7 +73,7 @@ bool http::request_parser::is_done() {
     return state == DONE;
 }
 
-bool http::request_parser::is_metadata_done() {
+bool http::request_parser::is_header_done() {
     return state == BODY;
 }
 
@@ -89,7 +91,7 @@ static http::request::request_type parse_request_type(const std::string str) {
 
 
 static void parse_request_line(size_t& i, const std::string& req_str, http::request& req) {
-    req.type = parse_request_type(parse_up_to_char(i, req_str, ' '));
+    req.method = parse_request_type(parse_up_to_char(i, req_str, ' '));
     req.url.path = parse_up_to_char(i, req_str, ' ');
     /* req.version = */parse_up_to_CRLF(i, req_str);
 }
@@ -122,8 +124,25 @@ static void parse_request_line(const std::string& str, http::request& out) {
     // std::cout << "Version: " << version << " Path: " << path << " Method: " << method << std::endl;
 
     out.version = out.version;
-    out.type = parse_request_type(method);
-    out.url = url::parse_absolute_path(path);
+    out.method = parse_request_type(method);
+    out.url = url::url::parse_absolute_path(path);
+}
+
+static void parse_response_line(const std::string& str, http::response& out) {
+    size_t i = 0;
+    size_t j = str.find(' ');
+    std::string version = str.substr(i, j - i);
+    i = j + 1;
+    j = str.find(' ', i);
+    std::string status_code = str.substr(i, j - i);
+    i = j + 1;
+    std::string status_reason = str.substr(i);
+
+    // std::cout << "Version: " << version << " Path: " << path << " Method: " << method << std::endl;
+
+    out.version = out.version;
+    out.status_code = std::stoi(status_code);
+    out.status_reason = status_reason;
 }
 
 // static void to_lowercase(std::string& str) {
@@ -168,7 +187,9 @@ bool http::request_parser::parse(const std::string& str) {
                     std::string key = header_line.substr(0, k), val = header_line.substr(k+1);
                     to_lowercase(key);
                     to_lowercase(val);
-                    std::cout << "Header: " << key << ": " << val << std::endl;
+                    rtrim(val);
+                    ltrim(val);
+                    std::cout << "Header: " << key << ":" << val << std::endl;
 
                     request.headers[key] = val;
                 }
@@ -178,19 +199,26 @@ bool http::request_parser::parse(const std::string& str) {
             }
             break;
         case BODY:
-            std::cout << std::endl << "unparsde:: " << unparsed << std::endl;
-            j = unparsed.find("\r\n\r\n");
-            if(j != std::string::npos) {
-                request.body += unparsed.substr(0, j);
-                state = DONE;
-                return true;
+            if(chunked) {
+
             }else {
-                request.body += unparsed.substr(0, unparsed.size()-4);
-                unparsed = unparsed.substr(unparsed.size()-4, 4);
-                i = 0;
-                return true;
+                // std::cout << std::endl << "unparsde:: " << unparsed << std::endl;
+                j = unparsed.find("\r\n\r\n");
+                if(j != std::string::npos) {
+                    // request.body += unparsed.substr(0, j);
+                    state = DONE;
+                    body.write(unparsed.substr(0, j));
+                    body.close();
+
+                    return true;
+                }else {
+                    body.write(unparsed.substr(0, unparsed.size()-4));
+                    unparsed = unparsed.substr(unparsed.size()-4, 4);
+                    i = 0;
+                    return true;
+                }
+                break;
             }
-            break;
         case DONE:
             std::cout << "DONE\n";
             return true;
@@ -199,4 +227,265 @@ bool http::request_parser::parse(const std::string& str) {
     }
 
     return state == BODY || state == DONE;
+}
+
+
+
+bool http::response_parser::parse(const std::string& str) {
+
+    for(auto& c : str) {
+
+        switch(state) {
+            case VERSION:
+                if(version_parser.parse(c)) {
+                    std::cout << "HTTP " << version_parser.major << "." << version_parser.minor << "\n";
+                    state = STATUS_CODE;
+                }
+                break;
+            case STATUS_CODE:
+                if(status_code_parser.parse(c)) {
+                    std::cout << "CODE: " << status_code_parser.status_code << "\n";
+                    state = STATUS_REASON;
+                }
+                break;
+
+        }
+    }
+
+    return false;
+
+    // size_t i = 0;
+    // bool running = true;
+    // while (running) {
+    //     running = false;
+    //     size_t j;
+    //     unparsed += str;
+    //     switch(state) {
+    //     case RESPONSE_LINE:
+    //         j = unparsed.find("\r\n");
+    //         if(j != std::string::npos) {
+    //             std::string req_line = unparsed.substr(i, j - i);
+    //             parse_response_line(req_line, response);
+
+    //             unparsed = unparsed.substr(j+2);
+    //             i = 0;
+    //             state = HEADERS;
+    //             running = true;
+    //         }
+    //         break;
+    //     case HEADERS:
+    //         j = unparsed.find("\r\n");
+    //         if(j != std::string::npos) {
+    //             std::string header_line = unparsed.substr(i, j - i);
+    //             if(header_line.empty()) {
+    //                 if(response.headers.contains("transfer-encoding")) {
+    //                     if(response.headers["transfer-encoding"]) {
+    //                         chunked = true;
+    //                         length_waiting_for = 0;
+    //                     }
+    //                 }else if(response.headers.contains("content-length")) {
+    //                     length_waiting_for = std::stoul(response.headers["content-length"]);
+    //                 }
+    //                 state = BODY;
+    //                 running = true;
+    //             }else {
+    //                 size_t k = header_line.find(":");
+    //                 std::string key = header_line.substr(0, k), val = header_line.substr(k+1);
+    //                 to_lowercase(key);
+    //                 to_lowercase(val);
+    //                 rtrim(val);
+    //                 ltrim(val);
+    //                 std::cout << key << " : " << val << std::endl;
+
+    //                 response.headers[key] = val;
+    //                 running = true;
+    //             }
+
+    //             unparsed = unparsed.substr(j+2);
+    //             i = 0;
+    //         }
+    //         break;
+    //     case BODY:
+    //         if(chunked) {
+    //             if(length_waiting_for > 0) {
+    //                 // Check for content length;
+    //                 size_t j = unparsed.find("\r\n");
+    //                 size_t chunk_length = std::stoul(unparsed.substr(0, j));
+    //                 unparsed = unparsed.substr(j+2);
+    //                 if(chunk_length == 0) {
+    //                     state = END;
+    //                 }
+    //             }
+    //         }else {
+    //             // std::cout << std::endl << "unparsde:: " << unparsed << std::endl;
+    //             j = unparsed.find("\r\n\r\n");
+    //             if(j != std::string::npos) {
+    //                 // request.body += unparsed.substr(0, j);
+    //                 state = DONE;
+    //                 body.write(unparsed.substr(0, j));
+    //                 body.close();
+
+    //                 return true;
+    //             }else {
+    //                 body.write(unparsed.substr(0, unparsed.size()-4));
+    //                 unparsed = unparsed.substr(unparsed.size()-4, 4);
+    //                 i = 0;
+    //                 return true;
+    //             }
+    //             break;
+    //         }
+    //         break;
+    //     case END:
+    //         j = unparsed.find("\r\n");
+    //         if(j != std::string::npos) {
+
+    //         }
+
+    //     case DONE:
+    //         return true;
+    //     };
+
+    // }
+
+    // return state == BODY || state == DONE;
+}
+
+
+
+
+
+bool http::version_parser::parse(char c) {
+    switch(state){
+        case EXPECT_H:
+            if(c != 'H') throw std::runtime_error("Expected H, got 'C'");
+            state = EXPECT_T;
+            return false;
+        case EXPECT_T:
+            if(c != 'T') throw std::runtime_error("Expected T, got 'C'");
+            state = EXPECT_TT;
+            return false;
+        case EXPECT_TT:
+            if(c != 'T') throw std::runtime_error("Expected T, got 'C'");
+            state = EXPECT_P;
+            return false;
+        case EXPECT_P:
+            if(c != 'P') throw std::runtime_error("Expected P, got 'C'");
+            state = EXPECT_SLASH;
+            return false;
+        case EXPECT_SLASH:
+            if(c != '/') throw std::runtime_error("Expected /, got 'C'");
+            state = EXPECT_MAJOR_DIGIT;
+            return false;
+        case EXPECT_MAJOR_DIGIT:
+            if(!is_num(c)) throw std::runtime_error("Expected digit, got 'C'");
+            token.push_back(c);
+            state = EXPECT_MAJOR_DIGIT_OR_DOT;
+            return false;
+
+        case EXPECT_MAJOR_DIGIT_OR_DOT:
+            if(is_num(c)) {
+                token.push_back(c);
+                return false;
+            }else if(c == '.') {
+                major = std::stoi(token);
+                token.clear();
+                state = EXPECT_MINOR_DIGIT;
+                return false;
+            }
+            
+            throw std::runtime_error("Expected digit or '.', got 'C'");
+        case EXPECT_MINOR_DIGIT:
+            if(!is_num(c)) throw std::runtime_error("Expected digit, got 'C'");
+            token.push_back(c);
+            state = EXPECT_MINOR_DIGIT_OR_SPACE;
+            return false;
+
+
+        case EXPECT_MINOR_DIGIT_OR_SPACE:
+            if(is_num(c)) {
+                token.push_back(c);
+                return false;
+            }else if(c == ' ') {
+                minor = std::stoi(token);
+                token.clear();
+                state = DONE;
+                return true;
+            }
+            
+            throw std::runtime_error("Expected digit or ' ', got 'C'");
+        case DONE:
+            return true;
+    }
+    return false;
+}
+
+
+
+
+bool http::status_code_parser::parse(char c) {
+    switch(state){
+        case EXPECT_DIGIT:
+            if(!is_num(c)) throw std::runtime_error("Expected digit, got 'C'");
+            token.push_back(c);
+            state = EXPECT_DIGIT_OR_SPACE;
+            return false;
+
+        case EXPECT_DIGIT_OR_SPACE:
+            if(is_num(c)) {
+                token.push_back(c);
+                return false;
+            }else if(c == ' ') {
+                status_code = std::stoi(token);
+                token.clear();
+                state = DONE;
+                return true;
+            }
+            throw std::runtime_error("Expected digit or '.', got 'C'");
+        case DONE:
+            return true;
+    }
+    return false;
+}
+
+
+http::stream& http::stream::on(events event, std::function<void(std::string)> handler) {
+    switch(event) {
+    case DATA:
+        handlers.on_data.push_back(handler);
+        for(auto handler : handlers.on_data) {
+            handler(unparsed);
+        }
+        unparsed = "";
+        break;
+    default:
+        throw std::runtime_error("\"CONNECT\" listener has the wrong type");
+    }
+    return *this;
+}
+http::stream& http::stream::on(events event, std::function<void()> handler) {
+    switch(event) {
+    case END:
+        handlers.on_end.push_back(handler);
+        break;
+    default:
+        throw std::runtime_error("\"CONNECT\" listener has the wrong type");
+    }
+    return *this;
+}
+
+void http::stream::write(std::string data) {
+    if(unparsed.length() + data.length() > 4 * 1024 * 1024) {
+        throw std::runtime_error("message too large");
+    }
+    unparsed += data;
+    if(handlers.on_data.empty()) return;
+    for(auto handler : handlers.on_data) {
+        handler(unparsed);
+    }
+    unparsed = "";
+}
+void http::stream::close() {
+    for(auto handler : handlers.on_end) {
+        handler();
+    }
 }

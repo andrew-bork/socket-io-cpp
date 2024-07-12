@@ -1,8 +1,8 @@
 #include "http/request.hpp"
 
-std::string http::request::build() const {
+std::string http::request::build() {
     std::string out = "";
-    // out += get_request_type(type);
+    out += http::get_request_type(method);
     out += " ";
     out += url.path.value_or("/");
 
@@ -23,19 +23,32 @@ std::string http::request::build() const {
     out += "HTTP/1.1";
     out += "\r\n";
 
-    for(auto i = headers.begin(); i != headers.end(); i ++) {
+    std::string s("content-length");
+    if(body.has_value()) headers["content-length"] = std::to_string(body.value().length());
+
+    for(auto i = headers.begin(); i != headers.end(); i++) {
         out += (*i).first;
         out += ":"; 
         out += (*i).second;
         out += "\r\n";
     }
 
-    out += body;
 
-    if(!body.empty())
-        out += "\r\n";
+    if(body.has_value())
+        out += body.value() + "\r\n";
 
     out += "\r\n";
 
     return out;
+}
+
+
+std::string http::get_request_type(http::request::request_type type) {
+    switch(type) {
+    case http::request::request_type::GET:
+        return "GET";
+    case http::request::request_type::POST:
+        return "POST";
+    }
+    throw std::runtime_error("Invalid Request Type");
 }

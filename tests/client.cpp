@@ -22,7 +22,7 @@ int main(int argc, char ** argv) {
     std::list<net::socket> connections;
 
     for(int i = 0; i < n_connections; i ++) {
-        auto& a = connections.emplace_back(net::connect("localhost", "3000"));
+        auto& a = connections.emplace_back(net::connect("localhost", "3003"));
         a.on(net::socket::events::DATA, [&] (std::string s) {
             std::cout << "Server: " << s << std::endl;
             a.close();

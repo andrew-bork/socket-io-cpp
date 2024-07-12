@@ -23,7 +23,7 @@ void interrupt_handler(int code) {
 int main() {
     
     net::event_loop ev;
-    server = net::create_server(3000);
+    server = net::create_server(3003);
 
     server.on(net::server::LISTEN, []() {
         printf("Server listening on \"localhost:3000\".\n");
@@ -43,6 +43,7 @@ int main() {
         });
     });
 
+    std::cout<<"huh\n";
 
     server.listen();
 

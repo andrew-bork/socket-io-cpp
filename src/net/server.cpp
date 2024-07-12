@@ -1,7 +1,8 @@
 
-#include <net/net.hpp>
+#include "net/net.hpp"
 #include <poll.h>
 #include <stdexcept>
+#include <cstring>
 
 int& net::server::fd() {
     return _socket.fd;
@@ -65,7 +66,8 @@ net::server net::create_server(const char * path) {
         throw std::runtime_error("Couldn't connect");
     }
 
-    return net::server(fd);
+    net::server out(fd);
+    return out;
 }
 
 net::server net::create_server(int port) {
@@ -85,7 +87,8 @@ net::server net::create_server(int port) {
         throw std::runtime_error("Couldn't bind");
     }
     
-    return net::server(fd);
+    net::server out(fd);
+    return out;
 }
 
 
@@ -120,6 +123,7 @@ net::server& net::server::operator=(const net::server& other) {
     _socket = other._socket;
     _connections = other._connections;
     listening = other.listening;
+    return *this;
 }
 
 net::server& net::server::operator=(net::server&& other) {
@@ -127,6 +131,7 @@ net::server& net::server::operator=(net::server&& other) {
     _connections = std::move(other._connections);
     listening = other.listening;
     other.listening = false;
+    return *this;
 }
 
 // void listen_block(net::server* server, int& backlog) {

@@ -66,7 +66,6 @@ void net::event_loop::socket_watcher::on_readable(EV_P_ ev_io* w, int revents) {
     auto& socket = watcher->socket;
     std::string data;
     ssize_t result = socket >> data;
-    std::cout << "recv amt: " << result << "\n";
     if(result == 0) {
         for(auto& handler : socket.on_disconnect_handlers) {
             handler();

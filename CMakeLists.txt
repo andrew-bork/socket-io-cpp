@@ -13,9 +13,14 @@ FILE(GLOB NET_SRC src/net/*.cpp)
 add_library(net ${NET_SRC})
 target_link_libraries(net ${CMAKE_SOURCE_DIR}/libev/.libs/libev.a)
 
+
+FILE(GLOB URL_SRC src/url/*.cpp)
+add_library(url ${URL_SRC})
+
 FILE(GLOB HTTP_SRC src/http/*.cpp)
 add_library(http ${HTTP_SRC})
 target_link_libraries(http net)
+target_link_libraries(http url)
 
 
 add_executable(server tests/server.cpp)
@@ -23,6 +28,9 @@ target_link_libraries(server net)
 add_executable(client tests/client.cpp)
 target_link_libraries(client net)
 # add_executable(http tests/http_test.cpp)
+add_executable(curl tests/curl.cpp)
+target_link_libraries(curl http)
+
 # add_executable(parse tests/parse.cpp)
 # add_executable(hserv tests/http_server.cpp)
 

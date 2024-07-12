@@ -4,5 +4,5 @@
 #include <string_view>
 namespace http {
     http::response get(const std::string& url_string);
-    http::response get(const http::request req);
+    http::response get(http::request req);
 }

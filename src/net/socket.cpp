@@ -74,29 +74,25 @@ size_t net::socket::operator>>(std::string& string) {
     return s;
 }
 
-#include <iostream>
-
-
 net::socket::socket(const net::socket& other) {
-    std::cout << "copying socket\n";
     fd = dup(other.fd);
     if(fd == -1) throw std::runtime_error("dup() failed.");
 }
 
 net::socket::socket(net::socket&& other) {
-    std::cout << "moving socket\n";
     fd = other.fd;
     other.fd = -1;
 }
 
 net::socket& net::socket::operator=(net::socket&& other) {
-    std::cout << "moving socket\n";
     fd = other.fd;
     other.fd = -1;
+    return *this;
 }
 net::socket& net::socket::operator=(const net::socket& other) {
-    std::cout << "copying socket\n";
 
     fd = dup(other.fd);
     if(fd == -1) throw std::runtime_error("dup() failed.");
+    
+    return *this;
 }

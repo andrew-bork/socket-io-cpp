@@ -1,18 +1,16 @@
 #include "http/get.hpp"
 #include "net/net.hpp"
-#include "http/url.hpp"
+#include "url/url.hpp"
 #include <stdexcept>
 
 http::response http::get(const std::string& url_string) {
     http::request req;
-    auto parsed = url::parse(url_string);
-    // if(!parsed.has_value()) throw std::runtime_error("Couldn't parse url.");
-    req.url = parsed.value();
+    req.url = url::parse(url_string);
     req.headers["Connection"] = "close";
     return http::get(req);
 }
 
-http::response http::get(const http::request req) {
+http::response http::get(http::request req) {
     std::string protocol = req.url.protocol.value_or("http");
     if(protocol == "http") {
 
