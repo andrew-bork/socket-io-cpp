@@ -6,13 +6,10 @@ net::event_loop::event_loop() : _loop(EV_DEFAULT) {
 
 
 void net::event_loop::add(net::socket& socket) {
-    // auto& watcher = _watchers.(_loop, socket);
-    std::cout << "abc\n";
     _socket_watchers.emplace_back(_loop, socket);
 }
 
 void net::event_loop::add(net::server& server) {
-
     _server_watchers.emplace_back(_loop, server);
 }
 
@@ -21,13 +18,6 @@ void net::event_loop::run() {
 }
 
 
-// struct timeout_watcher {
-//     ev_timer
-// };
-
-// static void timeout_callback() {
-//     ev_break();
-// }
 
 void net::event_loop::run(std::chrono::duration<std::milli> timeout) {
     ev_run(_loop);
@@ -40,7 +30,9 @@ net::event_loop::socket_watcher::~socket_watcher() {
 }
 
 net::event_loop::socket_watcher::socket_watcher(struct ev_loop* _loop, net::socket& _socket)
-     : loop(_loop), socket(_socket) {
+     : socket(_socket), 
+     loop(_loop)
+     {
     ev_io_init(&read_watcher, &net::event_loop::socket_watcher::on_readable, _socket.fd, EV_READ);
     read_watcher.data = static_cast<void*>(this);
     ev_io_start(loop, &read_watcher);
@@ -91,7 +83,7 @@ net::event_loop::server_watcher::~server_watcher() {
 }
 
 net::event_loop::server_watcher::server_watcher(struct ev_loop* _loop, net::server& _server)
-     : loop(_loop), server(_server) {
+     : server(_server), loop(_loop) {
     ev_io_init(&read_watcher, &net::event_loop::server_watcher::on_readable, _server.fd(), EV_READ);
     read_watcher.data = static_cast<void*>(this);
     ev_io_start(loop, &read_watcher);

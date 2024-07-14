@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.27.0)
 set(CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD 23)
 
-
+include(FetchContent)
 project(socket-io-cpp)
 
 # file(GLOB LIBEV_SRC ${CMAKE_SOURCE_DIR}/libev/*.c)
@@ -13,16 +13,26 @@ FILE(GLOB NET_SRC src/net/*.cpp)
 add_library(net ${NET_SRC})
 target_link_libraries(net ${CMAKE_SOURCE_DIR}/libev/.libs/libev.a)
 
-add_library(llhttp llhttp/build/c/llhttp.c)
+# add_library(llhttp llhttp/build/c/llhttp.c)
+FetchContent_Declare(llhttp
+  URL "https://github.com/nodejs/llhttp/archive/refs/tags/release/v8.1.0.tar.gz")
+
+set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
+set(BUILD_STATIC_LIBS ON CACHE INTERNAL "")
+FetchContent_MakeAvailable(llhttp)
+
+
+
 
 FILE(GLOB URL_SRC src/url/*.cpp)
 add_library(url ${URL_SRC})
 
-FILE(GLOB HTTP_SRC src/http/*.cpp)
+FILE(GLOB HTTP_SRC src/http/*.cpp llhttp/build/c/llhttp.c)
 add_library(http ${HTTP_SRC})
 target_link_libraries(http net)
 target_link_libraries(http url)
-target_link_libraries(http llhttp)
+# Link with the llhttp_shared target
+target_link_libraries(http llhttp_static)
 
 
 add_executable(server tests/server.cpp)

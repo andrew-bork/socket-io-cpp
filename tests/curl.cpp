@@ -20,9 +20,9 @@ void debug_print(std::string s) {
 
 int main(int argc, char ** argv) {
     
-    int n_connections = 1;
+    std::string url = "http://google.com";
     if(argc >= 2) {
-        n_connections = atoi(argv[1]);
+        url = std::string(argv[1]);
     }
     // std::vector<std::shared_ptr<net::socket>> conns;
 
@@ -32,34 +32,35 @@ int main(int argc, char ** argv) {
 
     http::request req;
     req.method = http::request::GET;
-    req.url = url::parse("http://www.google.com");
+    req.url = url::parse("http://www.example.com");
     req.headers["host"] = req.url.domain.value();
     // req.headers["connection"] = "close";
     
     net::event_loop loop;
     http::response_parser parser;
     parser.body.on(http::stream::DATA, [&](std::string data) {
-        std::cout << "Body: " << data.length() << " bytes\n";
+        std::cout << data;
+        // std::cout << "Body: " << data.length() << " bytes\n";
 
     });
     parser.body.on(http::stream::END, [&]() {
-        std::cout << "Body Finished\n";
+        // std::cout << "Body Finished\n";
     });
 
-    net::socket a = net::connect("www.google.com", "80");
+    net::socket a = net::connect(req.url.domain.value(), "80");
     a.on(net::socket::events::DATA, [&] (std::string s) {
-        std::cout << "Server: " << s.length() << " bytes" << std::endl;
-        debug_print(s.substr(0, 50));
+        // std::cout << "\nServer: " << s.length() << " bytes" << std::endl;
+        // debug_print(s.substr(0, 50));
         // debug_print(s.substr(s.length()-50));
-        std::cout << "\n";
-        parser.parse(s);
+        // std::cout << "\n";
+        if(parser.parse(s)) a.close();
     });
     a.on(net::socket::DISCONNECT, []() {
-        std::cout << "welp\n";
+        // std::cout << "welp\n";
     });
     loop.add(a);
     a << req.build();
     loop.run();
 
-    std::cout << "huh\n";
+    // std::cout << "huh\n";
 }   

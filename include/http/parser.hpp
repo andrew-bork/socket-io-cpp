@@ -7,6 +7,7 @@
 #include <vector>
 #include <optional>
 
+#include "llhttp.h"
 
 namespace http {
 
@@ -31,7 +32,17 @@ namespace http {
     };
 
     struct request_parser {
+        std::string header = "";
+        std::string value = "";
+        std::string url = "";
+        bool finished = false;
+
+
         http::request request;
+
+        llhttp_t parser;
+	    llhttp_settings_t parser_settings;
+
 
         http::stream body;
 
@@ -42,8 +53,16 @@ namespace http {
     };
 
     struct response_parser {
+        std::string header = "";
+        std::string value = "";
+        std::string status = "";
+        bool finished = false;
+
         http::response response;
         http::stream body;
+
+        llhttp_t parser;
+	    llhttp_settings_t parser_settings;
 
         response_parser();
         bool parse(const std::string& response_string);
