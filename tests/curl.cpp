@@ -20,7 +20,7 @@ void debug_print(std::string s) {
 
 int main(int argc, char ** argv) {
     
-    std::string url = "http://google.com";
+    std::string url = "http://example.com";
     if(argc >= 2) {
         url = std::string(argv[1]);
     }
@@ -29,10 +29,14 @@ int main(int argc, char ** argv) {
     // net::event_loop ev;
     // printf("POSIX:%d\n", __POSIX_VISIBLE);
 
-
     http::request req;
     req.method = http::request::GET;
-    req.url = url::parse("http://www.example.com");
+    try {
+
+        req.url = url::parse(url);
+    }catch(const std::exception& e) {
+        std::cerr << "Invalid url \"" << url << "\"." << std::endl;
+    }
     req.headers["host"] = req.url.domain.value();
     // req.headers["connection"] = "close";
     

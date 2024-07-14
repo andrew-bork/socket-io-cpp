@@ -1,10 +1,11 @@
 #include <iostream>
-#include <http.hpp>
+#include "url/url.hpp"
+#include "http/request.hpp"
 
 
 void test(std::string s) {
     std::cout << "Parsing: " << s << std::endl;
-    url _url = url::parse(s).value();
+    url::url _url = url::parse(s);
     std::cout <<    "Protocol: " << _url.protocol.value_or("NONE") << 
                     " Domain: " << _url.domain.value_or("NONE") <<
                     " Port: " << _url.port.value_or("NONE") << std::endl << 
@@ -27,14 +28,15 @@ int main() {
     test("mailto:bork.andrew.ryan@gmail.com");
     test("https://google.com");
     test("https://google.com/");
+    test("www.google.com/");
 
     http::request req;
-    req.url = url::parse("http://google.com/hello/world?a=b").value();
+    req.url = url::parse("http://google.com/hello/world?a=b");
     req.headers["lang"] = "eng-pls";
     req.body = "goo goo gaa gaa";
 
     std::cout << req.build() << std::endl;
 
     // std::cout << http::curl("http://www.google.com/") << std::endl;
-    http::response::parse(http::curl("http://www.google.com/"));
+    // http::response::parse(http::curl("http://www.google.com/"));
 }

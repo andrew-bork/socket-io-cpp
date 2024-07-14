@@ -21,7 +21,7 @@ void* get_in_addr(sockaddr *s) {
 
 
 
-net::socket net::connect(const char * address, const char * port) {
+net::socket net::connect(std::string address, std::string port) {
     addrinfo hints;
     addrinfo *results;
 
@@ -32,7 +32,7 @@ net::socket net::connect(const char * address, const char * port) {
     hints.ai_flags = 0;
     hints.ai_protocol = 0;
 
-    int success = getaddrinfo(address, port, &hints, &results);
+    int success = getaddrinfo(address.c_str(), port.c_str(), &hints, &results);
 
     int fd = -1;
     for(addrinfo * curr = results; curr != NULL; curr = curr->ai_next) {
@@ -72,16 +72,16 @@ net::socket net::connect(const char * address, const char * port) {
     return net::socket(fd);
 }
 
-net::socket net::connect(const char * addr, int port) {
+net::socket net::connect(std::string addr, int port) {
     char buf[6];
     snprintf(buf, 6, "%d", port);
-    return net::connect(addr, buf);
+    return net::connect(addr.c_str(), buf);
 }
 
-net::socket net::connect(const char * path) {
+net::socket net::connect(std::string path) {
     sockaddr_un addr;
     addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, path, sizeof(addr.sun_path));
+    strncpy(addr.sun_path, path.c_str(), sizeof(addr.sun_path));
     
 
     int fd = ::socket(AF_UNIX, SOCK_STREAM, 0);
