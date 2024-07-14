@@ -1,5 +1,5 @@
 #include "url/url.hpp"
-
+#include <regex>
 
 percent_encoding_error::percent_encoding_error(size_t i, std::string parsed_string) : parse_error(i, parsed_string, "Invalid percent-escaped sequence.") {}
 
@@ -350,6 +350,8 @@ url::url url::url::parse_absolute_path(const std::string& str) {
     return out;
 }
 
+
+static std::regex::basic_regex url_matcher("\w[\w\d+\\-.]");
 url::url url::parse(const std::string& url_string) {
     // https://video.google.co.uk:80/videoplay?docid=-7234293487129834&hl=en#00h02m30s
     url returned;
