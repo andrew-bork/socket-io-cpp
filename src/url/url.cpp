@@ -24,356 +24,158 @@ static bool is_sub_delim(const char& c) {
     return c == '!' || c == '$' || c == '&' || c ==  '\'' || c ==  '(' || c ==  ')' || c ==  '*' || c ==  '+' || c ==  ',' || c ==  ';' || c ==  '=';
 }
 
-// static bool is_reserved(const char& c) {
-//     return is_sub_delim(c) || is_sub_delim(c);
-// }
-
-
-static void to_lowercase(std::string& s) {
-    for(size_t i = 0; i < s.size(); i ++) {
-        char& curr = s[i];
-        if('A' <= curr && curr <= 'Z') s[i] = curr - 'A' + 'a';
-    }
-}
-
-static std::optional<std::string> parse_protocol(size_t& i, const std::string& url_string) {
-    size_t orginal_position = i;
-    std::string out = "";
-
-    if(i < url_string.size() && is_alpha(url_string[i])) {
-        out += url_string[i];
-        i++;
-    }else {
-        i = orginal_position;
-        return std::nullopt;
-    }
-
-    while(i < url_string.size()) {
-        char curr = url_string[i];
-        if(curr == ':') {
-            i++;
-
-            to_lowercase(out);
-
-            return out;
-        }
-
-        if(is_alpha(curr) || is_num(curr) || curr == '+' || curr == '-' || curr == '.') {
-            out += curr;
-            i ++;
-        }else {
-            i = orginal_position;
-            return std::nullopt;
-        }
-    }
-
-    i = orginal_position;
-    return std::nullopt;
-}
-
 static bool is_hex(const char& c) {
     return is_num(c) || c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e' || c == 'f' || c == 'A' || c == 'B' || c == 'C' || c == 'D' || c == 'E' || c == 'F';
 }
 
-static std::optional<std::string> parse_ipv4(size_t& i, const std::string& url_string) {
-    return std::nullopt;
-}
-static std::optional<std::string> parse_ipv6(size_t& i, const std::string& url_string) {
-    return std::nullopt;
-}
-
-static std::optional<std::string> parse_pct_escp(size_t& i, const std::string& url_string) {
-    for(size_t j = 1; j < 3; j ++) {
-        if((i + j) >= url_string.size()) throw percent_encoding_error(i+j, url_string);
-        if(!is_hex(url_string[i+j])) throw percent_encoding_error(i+j, url_string);
-
-    }
-    std::string out = url_string.substr(i, 3);
-    i += 3;
-    return out;
-}
-
-static std::optional<std::string> parse_regname(size_t& i, const std::string& url_string) {
-
-    std::string out = "";
-
-    while(i < url_string.size()) {
-        char curr = url_string[i];
-        if(curr == '%') {
-            auto pct_escp = parse_pct_escp(i, url_string);
-            if(!pct_escp.has_value()) {
-                return std::nullopt;
-            }
-
-            out += pct_escp.value();
-        }else if(is_unreserved(curr) || is_sub_delim(curr)) {
-            out += curr;
-            i++;
-        }else {
-            return out;
-        }
-    }
-
-    return out;
-}
-
-static std::optional<std::string> parse_userinfo(size_t& i, const std::string& url_string) {
-    size_t orginal_position = i;
-    std::string out = "";
-
-    while(i < url_string.size()) {
-        char curr = url_string[i];
-        if(curr == '%') {
-            auto pct_escp = parse_pct_escp(i, url_string);
-            if(!pct_escp.has_value()) {
-                return std::nullopt;
-            }
-
-            out += pct_escp.value();
-        }else if(is_unreserved(curr) || is_sub_delim(curr) || curr == ':') {
-            out += curr;
-            i++;
-        }else if(curr == '@') {
-            i++;
-            return out;
-        }else{
-            i = orginal_position;
-            return std::nullopt;
-        }
-    }
-
-    i = orginal_position;
-    return std::nullopt;
-}
-
-
-static std::optional<std::string> parse_host(size_t& i, const std::string& url_string) {
-    auto ipv4 = parse_ipv4(i, url_string);
-    if(ipv4.has_value()) {
-        return ipv4;
-    }
-
-    auto ipv6 = parse_ipv6(i, url_string);
-    if(ipv6.has_value()) {
-        return ipv6;
-    }
-
-    auto regname = parse_regname(i, url_string);
-    if(regname.has_value()) {
-        return regname;
-    }
-
-    return std::nullopt;
-}
-
-
-static std::optional<std::string> parse_port(size_t& i, const std::string& url_string) {
-    size_t orginal_position = i;
-    std::string out = "";
-
-    if(i < url_string.size() && url_string[i] == ':') {
-        i++;
-    }else {
-        i = orginal_position;
-        return std::nullopt;
-    }
-
-    while(i < url_string.size()) {
-        char curr = url_string[i];
-
-        if(is_num(curr)) {
-            out += curr;
-            i++;
-        }else{
-            return out;
-        }
-    }
-
-    return out;
-}
 
 struct authority {
     std::optional<std::string> userinfo, host, port;  
 };
 
-static authority parse_authority(size_t& i, const std::string& url_string) {
-
-    authority out;
-
-    out.userinfo = parse_userinfo(i, url_string);
-    
-    out.host = parse_host(i, url_string);
-    
-    out.port = parse_port(i, url_string);
-    
-    return out;
+static void parse_pct_enc(std::string::const_iterator begin, std::string::const_iterator end, std::string::const_iterator& next) {
+    for(size_t j = 1; j < 3; j ++) {
+        if((begin + j) == end) throw std::runtime_error("percent encode error");
+        if(!is_hex(*(begin + j))) throw std::runtime_error("percent encode error");
+        
+    }
+    std::string out = std::string(begin, begin + 3);
+    next = begin + 3;
 }
 
-static std::optional<std::string> parse_absolute_path(size_t& i, const std::string& url_string) {
-    size_t orginal_position = i;
+static std::string parse_absolute_path(std::string::const_iterator begin, std::string::const_iterator end, std::string::const_iterator& next) {
     std::string out = "";
-
-    if(i < url_string.size() && url_string[i] == '/') {
-        out += url_string[i];
-        i++;
-    }else {
-        i = orginal_position;
-        return std::nullopt;
-    }
-
-    
-    while(i < url_string.size()) {
-        char curr = url_string[i];
-        if(curr == '%') {
-            auto pct_escp = parse_pct_escp(i, url_string);
-            if(!pct_escp.has_value()) {
-                return std::nullopt;
-            }
-
-            out += pct_escp.value();
-        }else if(is_unreserved(curr) || is_sub_delim(curr) || curr == ':' || curr == '@' || curr == '/') {
-            out += curr;
-            i++;
-        }else{
-            return out;
-        }
-    }
-
-    return out;
-}
-
-static std::unordered_map<std::string, std::string> parse_queries(size_t& i, const std::string& url_string) {
-    size_t orginal_position = i;
-    std::unordered_map<std::string, std::string> out;
-
-    if(i < url_string.size() && url_string[i] == '?') {
-        i++;
-    }else {
-        i = orginal_position;
-        return out;
-    }
-
-    std::string key = "";
-    std::string value = "";
-    bool parsing_key = true;
-    while(i < url_string.size()) {
-        char curr = url_string[i];
-        if(curr == '%') {
-            auto pct_escp = parse_pct_escp(i, url_string);
-            if(!pct_escp.has_value()) {
-                return out;
-            }
-
-            if(parsing_key) key += pct_escp.value();
-            else value += pct_escp.value();
-        }else if(curr == '&') { 
-            if(!parsing_key) {
-                out[key] = value;
-                parsing_key = true;
-            }
-            key = "";
-            value = "";
-            i++;
-        }else if(curr == '=') {
-            parsing_key = false;
-            i++;
-        }else if(is_unreserved(curr) || is_sub_delim(curr) || curr == ':' || curr == '@' || curr == '/') {
-            if(parsing_key) key += curr;
-            else value += curr;
-            i++;
+    std::string::const_iterator curr = begin;
+    while(begin != end) {
+        char c = *curr;
+        if(c == '%') {
+            parse_pct_enc(begin, end, begin);
+        }else if(is_unreserved(c) || is_sub_delim(c) || c == ':' || c == '@' || c == '/') {
+            curr ++;
         }else{
             break;
         }
     }
-    
-    if(!parsing_key) {
-        out[key] = value;
-        parsing_key = true;
-    }
-
-    return out;
+    std::string::const_iterator a = begin;
+    next = curr;
+    return std::string(a, curr);
 }
 
-static std::optional<std::string> parse_fragment(size_t& i, const std::string& url_string) {
-    std::string out;
+static std::unordered_map<std::string, std::string> parse_queries(std::string::const_iterator begin, std::string::const_iterator end, std::string::const_iterator& next) {
+    std::unordered_map<std::string, std::string> out;
 
-    if(i < url_string.size() && url_string[i] == '#') {
-        i++;
-    }else {
-        return std::nullopt;
-    }
+    std::string::const_iterator value_start, curr = begin;
 
+    while(curr != end) {
+        std::string::const_iterator key_start = curr;
+        // Parse key
+        while(curr != end) {
+            char c = *curr;
+            if(c == '%') {
+                parse_pct_enc(begin, end, begin);
+            }else if(c == '=') { 
+                // End at =
+                
+                curr++;
+                break;
+            }else if(is_unreserved(c) || is_sub_delim(c) || c == ':' || c == '@' || c == '/') {
+                curr++;
+            }else{
+                // exit early if theres an non-query character
 
-    while(i < url_string.size()) {
-        char curr = url_string[i];
-        if(curr == '%') {
-            auto pct_escp = parse_pct_escp(i, url_string);
-            if(!pct_escp.has_value()) {
-                return std::nullopt;
+                next = curr;
+                return out;
             }
+        }
 
-            out += pct_escp.value();
-        }else if(is_unreserved(curr) || is_sub_delim(curr) || curr == ':' || curr == '@' || curr == '/' || curr == '?') {
-            out += curr;
-            i++;
-        }else{
-            return out;
+        std::string::const_iterator value_start = curr;
+
+        while(curr != end) {
+            char c = *curr;
+            if(c == '%') {
+                parse_pct_enc(begin, end, begin);
+            }else if(c == '&') {
+                // End at &
+                // Add key-value to output map.
+                out[std::string(key_start, value_start-2)] = std::string(value_start, curr);
+
+                curr++;
+                break;
+            }else if(is_unreserved(c) || is_sub_delim(c) || c == ':' || c == '@' || c == '/') {
+                curr++;
+            }else{
+                // exit early if theres an non-query character
+                // Add key-value to output map.
+                out[std::string(key_start, value_start-2)] = std::string(value_start, curr);
+                next = curr;
+                return out;
+            }
         }
     }
 
-    return out;;
+    return out;
 }
 
-// static std::optional<std::string> get_default_port(const std::string& protocol) {
-//     if(protocol == "https") {
-//         return "443";
-//     }else if(protocol == "http") {
-//         return "80";
-//     }
+static std::regex scheme_matcher("\\w[\\w\\d+\\-.]*:");
+static std::regex authority_matcher("([\\w\\d\\-._~%!$&'()*+,/=:]+@)?([\\w\\d\\-._~%!$&'()*+,;=]+)(:\\d*)?");
 
-//     return  std::nullopt;
-// }
+static std::optional<std::string> parse_scheme(std::string::const_iterator begin, std::string::const_iterator end, std::string::const_iterator& next) {
+    std::smatch match;
+    if(std::regex_search(begin, end, match, scheme_matcher)) {
+        next = match[0].second;
+        return std::string(match[0].first, match[0].second-1);
+    }
+    return std::nullopt;
+}
 
+// static std::optional<std::string> parse
 
-url::url url::url::parse_absolute_path(const std::string& str) {
-    url out;
-    size_t i = 0;
-
-    auto path = ::parse_absolute_path(i, str);
-    if(!path.has_value()) throw parse_error(0, str, "String has no absolute path.");
-    out.path = path;
-
-    out.queries = parse_queries(i, str);
-
-    out.fragment = parse_fragment(i, str);
-
+static authority parse_authority(std::string::const_iterator begin, std::string::const_iterator end, std::string::const_iterator& next) {
+    authority out;
+    std::smatch match;
+    if(std::regex_search(begin, end, match, authority_matcher)) {
+        next = match[0].second;
+        if(match[3].length() > 0) out.port = std::string(match[3].first+1, match[3].second);
+        out.host = match[2].str();
+        if(match[1].length() > 0) out.userinfo = std::string(match[1].first, match[1].second - 1);
+    }
     return out;
 }
 
 
-static std::regex::basic_regex url_matcher("\w[\w\d+\\-.]");
 url::url url::parse(const std::string& url_string) {
-    // https://video.google.co.uk:80/videoplay?docid=-7234293487129834&hl=en#00h02m30s
     url returned;
 
-    size_t i = 0;
+    // Initialize Iterators
+    std::string::const_iterator current = url_string.begin(), end = url_string.end();
+    
+    // Parse Scheme "https:..."
+    returned.protocol = parse_scheme(current, end, current);
 
-    returned.protocol = parse_protocol(i, url_string);
+    // Parse authority if "//..."
+    if(*current == '/' && *(current + 1) == '/') {
+        current = current + 2;
 
-    if(i + 1 < url_string.size() && url_string[i] == '/' && url_string[i+1] == '/') {
-        i += 2;
-        authority auth = parse_authority(i, url_string);
-
-        returned.domain = auth.host;
-        returned.userinfo = auth.userinfo;
-        returned.port = auth.port;
+        authority a = parse_authority(current, end, current);
+        returned.userinfo = a.userinfo;
+        returned.host = a.host;
+        returned.port = a.port;
     }
 
-    returned.path = ::parse_absolute_path(i, url_string);
+    // Parse path
+    returned.path = parse_absolute_path(current, end, current);
+    
+    // Parse query if "?...."
+    if(*current == '?') {
+        current ++;
+        returned.queries = parse_queries(current, end, current);
+    }
 
-    returned.queries = parse_queries(i, url_string);
-
-    returned.fragment = parse_fragment(i, url_string);
+    // Parse fragment/anchor if "#......"
+    if(*current == '#') {
+        current ++;
+        returned.fragment = std::string(current, end);
+    }
 
     return returned;
 }

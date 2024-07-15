@@ -4,7 +4,11 @@ std::string http::request::build() {
     std::string out = "";
     out += http::get_request_type(method);
     out += " ";
-    out += url.path.value_or("/");
+    if(url.path.has_value() && url.path.value().size() > 0) {
+        out += url.path.value();
+    }else {
+        out += "/";
+    }
 
     if(!url.queries.empty()) {
         out += "?";
@@ -23,7 +27,6 @@ std::string http::request::build() {
     out += "HTTP/1.1";
     out += "\r\n";
 
-    std::string s("content-length");
     if(body.has_value()) headers["content-length"] = std::to_string(body.value().length());
 
     for(auto i = headers.begin(); i != headers.end(); i++) {

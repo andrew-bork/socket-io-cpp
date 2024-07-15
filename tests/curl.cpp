@@ -34,10 +34,12 @@ int main(int argc, char ** argv) {
     try {
 
         req.url = url::parse(url);
+        std::cout << req.url.host.value_or("ababa") <<"\n\n";
     }catch(const std::exception& e) {
         std::cerr << "Invalid url \"" << url << "\"." << std::endl;
     }
-    req.headers["host"] = req.url.domain.value();
+    req.headers["host"] = req.url.host.value();
+    // req.headers[""]
     // req.headers["connection"] = "close";
     
     net::event_loop loop;
@@ -51,7 +53,7 @@ int main(int argc, char ** argv) {
         // std::cout << "Body Finished\n";
     });
 
-    net::socket a = net::connect(req.url.domain.value(), "80");
+    net::socket a = net::connect(req.url.host.value(), "80");
     a.on(net::socket::events::DATA, [&] (std::string s) {
         // std::cout << "\nServer: " << s.length() << " bytes" << std::endl;
         // debug_print(s.substr(0, 50));
@@ -63,6 +65,7 @@ int main(int argc, char ** argv) {
         // std::cout << "welp\n";
     });
     loop.add(a);
+    std::cout << req.build() << "\n\n";
     a << req.build();
     loop.run();
 

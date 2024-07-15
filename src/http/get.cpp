@@ -20,10 +20,10 @@ http::response http::get(http::request req) {
         throw std::runtime_error(protocol + " protocol not supported");
     }
 
-    if(!req.url.domain.has_value()) throw std::runtime_error("URL has no domain.");
+    if(!req.url.host.has_value()) throw std::runtime_error("URL has no domain.");
 
     // net::event_loop ev;
-    auto sock = net::connect(req.url.domain.value().c_str(), req.url.port.value_or("80").c_str());
+    auto sock = net::connect(req.url.host.value().c_str(), req.url.port.value_or("80").c_str());
     std::string out = "";
     sock.on(net::socket::DATA,[&](std::string chk) {
         out += chk;

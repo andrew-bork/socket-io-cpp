@@ -17,14 +17,12 @@ namespace url {
         std::optional<std::string> protocol = std::nullopt;
         
         std::optional<std::string> userinfo = std::nullopt;
-        std::optional<std::string> domain = std::nullopt;
+        std::optional<std::string> host = std::nullopt;
         std::optional<std::string> port = std::nullopt;
         std::optional<std::string> path = std::nullopt;
         std::optional<std::string> fragment = std::nullopt;
 
         std::unordered_map<std::string, std::string> queries;
-
-        static url parse_absolute_path(const std::string& str);
     };
     url parse(const std::string& url_string);
 }
