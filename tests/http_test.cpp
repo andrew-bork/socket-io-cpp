@@ -31,6 +31,7 @@ int main() {
     test("https://google.com/");
     test("https://a-321@b.cdfdas.com:890/");
     test("//www.google.com/");
+    test("https://jisho.org/search/%E6%89%93%E3%81%A1");
 
     http::request req;
     req.url = url::parse("http://google.com/hello/world?a=b");
