@@ -27,13 +27,17 @@ FetchContent_MakeAvailable(llhttp)
 FILE(GLOB URL_SRC src/url/*.cpp)
 add_library(url ${URL_SRC})
 
-FILE(GLOB HTTP_SRC src/http/*.cpp llhttp/build/c/llhttp.c)
+FILE(GLOB HTTP_SRC src/http/*.cpp)
 add_library(http ${HTTP_SRC})
 target_link_libraries(http net)
 target_link_libraries(http url)
 # Link with the llhttp_shared target
 target_link_libraries(http llhttp_static)
 
+
+FILE(GLOB WEBSOCKET_SRC src/websocket/*.cpp)
+add_library(websocket ${WEBSOCKET_SRC})
+target_link_libraries(websocket http)
 
 add_executable(server tests/server.cpp)
 target_link_libraries(server net)
@@ -43,6 +47,8 @@ add_executable(http_test tests/http_test.cpp)
 target_link_libraries(http_test http)
 add_executable(curl tests/curl.cpp)
 target_link_libraries(curl http)
+add_executable(ws-client tests/ws-client.cpp)
+target_link_libraries(ws-client websocket)
 
 # add_executable(parse tests/parse.cpp)
 # add_executable(hserv tests/http_server.cpp)
