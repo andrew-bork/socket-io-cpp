@@ -48,7 +48,7 @@ void net::event_loop::socket_watcher::on_writable(EV_P_ ev_io* w, int revents) {
     auto watcher = static_cast<net::event_loop::socket_watcher*>(w->data);
     auto& socket = watcher->socket;
     ev_io_stop(watcher->loop, w);
-    for(auto& handler : socket.on_connect_handlers) {
+    for(auto& handler : socket.handlers.on_connect) {
         handler();
     }
 }
@@ -59,12 +59,13 @@ void net::event_loop::socket_watcher::on_readable(EV_P_ ev_io* w, int revents) {
     std::string data;
     ssize_t result = socket >> data;
     if(result == 0) {
-        for(auto& handler : socket.on_disconnect_handlers) {
+        for(auto& handler : socket.handlers.on_disconnect) {
             handler();
         }
+        socket.close();
         ev_io_stop(watcher->loop, w);
     }else {
-        for(auto& handler : socket.on_data_handlers) {
+        for(auto& handler : socket.handlers.on_data) {
             handler(data);
         }
 

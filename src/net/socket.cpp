@@ -17,16 +17,16 @@ void net::socket::close() {
     }
 }
 net::socket::socket(int _fd) : fd(_fd) {
-
+    opened = fd != -1;
 }
 
 net::socket& net::socket::on(net::socket::events event, std::function<void()> handler) {
     switch(event) {
     case CONNECT:
-        on_connect_handlers.push_back(handler);
+        handlers.on_connect.push_back(handler);
         break;
     case DISCONNECT:
-        on_disconnect_handlers.push_back(handler);
+        handlers.on_disconnect.push_back(handler);
         break;
     default:
         throw std::runtime_error("\"CONNECT\" listener has the wrong type");
@@ -37,7 +37,7 @@ net::socket& net::socket::on(net::socket::events event, std::function<void()> ha
 net::socket& net::socket::on(net::socket::events event, std::function<void(std::string)> handler) {
     switch(event) {
     case DATA:
-        on_data_handlers.push_back(handler);
+        handlers.on_data.push_back(handler);
         break;
     default:
         throw std::runtime_error("\"LISTEN\" listener has the wrong type");
@@ -51,7 +51,7 @@ net::socket::~socket() {
 
 size_t net::socket::operator<<(const std::string string) {
     size_t n_bytes = string.size();
-    size_t s = send(fd, &string[0], n_bytes, 0);
+    ssize_t s = send(fd, &string[0], n_bytes, 0);
     if(s == -1) {
         throw std::runtime_error("Something went wrong with send.");
     }
@@ -96,3 +96,45 @@ net::socket& net::socket::operator=(const net::socket& other) {
     
     return *this;
 }
+
+
+// template<>
+// void net::socket::on<events::CONNECT>(std::function<void()> f) {
+//     handlers.on_connect.push_back(f);
+// }
+// template<>
+// void net::socket::on<events::DATA>(std::function<void(std::string)>> f) {
+//     handlers.on_data.push_back(f);
+// }
+// template<>
+// void net::socket::on<events::DISCONNECT>(std::function<void()> f) {
+//     handlers.on_disconnect.push_back(f);
+// }
+
+
+
+// template<>
+// void net::socket_on<net::socket::CONNECT>(net::socket& s, std::function<void()> f) {
+//     s.handlers.on_connect.push_back(f);
+// }
+// template<>
+// void net::socket_on<net::socket::DATA>(net::socket& s, std::function<void(std::string)>> f) {
+
+// }
+// template<>
+// void net::socket_on<net::socket::DISCONNECT>(net::socket& s, std::function<void()> f) {
+
+// }
+
+void net::socket::on_connect(std::function<void(void)> f) {
+    handlers.on_connect.push_back(f);
+}
+
+void net::socket::on_data(std::function<void(std::string)> f) {
+    handlers.on_data.push_back(f);
+}
+
+void net::socket::on_disconnect(std::function<void(void)> f) {
+    handlers.on_disconnect.push_back(f);
+}
+
