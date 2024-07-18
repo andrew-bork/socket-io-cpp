@@ -2,6 +2,7 @@
 #include <iostream>
 #include "util/string.hpp"
 #include <stdexcept>
+#include <algorithm>
 
 bool http::request_parser::is_done() {
     // return state == DONE;
@@ -51,7 +52,12 @@ http::request_parser::request_parser() {
 
     parser_settings.on_header_field_complete = [](llhttp_t* parser) {        
         auto& req_parser = *static_cast<http::request_parser*>(parser->data);
+        
+        std::transform(req_parser.header.begin(), req_parser.header.end(), req_parser.header.begin(),
+            [](unsigned char c){ return std::tolower(c); });
+        
         req_parser.request.headers[req_parser.header] = req_parser.value;
+        
         req_parser.header = "";
         req_parser.value = "";
         return 0;
@@ -87,7 +93,7 @@ http::request_parser::request_parser() {
     };
 }
 
-// #include <iostream>
+#include <iostream>
 
 http::response_parser::response_parser() {
     llhttp_settings_init(&parser_settings);
@@ -117,7 +123,10 @@ http::response_parser::response_parser() {
 
     parser_settings.on_header_field_complete = [](llhttp_t* parser) {        
         auto& res_parser = *static_cast<http::response_parser*>(parser->data);
+        std::transform(res_parser.header.begin(), res_parser.header.end(), res_parser.header.begin(),
+            [](unsigned char c){ return std::tolower(c); });
         res_parser.response.headers[res_parser.header] = res_parser.value;
+        std::cout << "HEADER " <<  res_parser.header << ":" << res_parser.value << "\n";
         res_parser.header = "";
         res_parser.value = "";
         return 0;
@@ -175,6 +184,22 @@ bool http::response_parser::parse(const std::string& str) {
     }
 }
 
+void http::response_parser::reset() {
+    header = "";
+    value = "";
+    status = "";
+    response = http::response();
+    llhttp_reset(&parser);
+}
+
+
+void http::request_parser::reset() {
+    header = "";
+    value = "";
+    url = "";
+    request = http::request();
+    llhttp_reset(&parser);
+}
 
 http::stream& http::stream::on(events event, std::function<void(std::string)> handler) {
     switch(event) {

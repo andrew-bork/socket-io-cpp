@@ -6,7 +6,11 @@
 #include "net/socket.hpp"
 #include "url/url.hpp"
 #include "http/parser.hpp"
-#include <openssl/evp.h>
+// #include <openssl/evp.h>
+
+// #include "util/hash.hpp"
+
+
 namespace websocket {
     struct socket {
 
@@ -54,10 +58,11 @@ namespace websocket {
                 websocket::socket& _socket;
                 callback_list<net::socket::on_connect_handler>::callback_manager _sock_connect_handler;
                 callback_list<stream::readable::on_data_handler>::callback_manager _sock_data_handler;
-                std::string _secure_key;
+                std::string _secure_key, _secure_key_accept;
                 http::response_parser _response_parser;
 
-                EVP_MD_CTX *_hasher_ctx = NULL;
+                // EVP_MD_CTX *_hasher_ctx = NULL;
+                // hash::sha1 _hasher;
 
                 handshake_manager(websocket::socket& socket);
                 ~handshake_manager();

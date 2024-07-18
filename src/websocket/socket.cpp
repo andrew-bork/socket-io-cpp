@@ -9,6 +9,8 @@
 #include <openssl/crypto.h>
 #include "base64.hpp"
 
+#include "util/hash.hpp"
+
 websocket::socket::socket(const net::socket& socket, std::string path) : _socket(socket) {
     _url.path = path;
 }
@@ -91,22 +93,19 @@ websocket::socket::~socket() {
 
 websocket::socket::handshake_manager::handshake_manager(websocket::socket& socket) : _socket(socket) {
 
-    // _hasher_ctx  = EVP_MD_CTX_create();
-    // if(_hasher_ctx == NULL) throw std::runtime_error("Failed to initialize sha1 hasher");
-    // EVP_MD* sha1 = EVP_sha1();
-    // if(EVP_DigestInit_ex(_hasher_ctx, sha1, NULL) == -1) throw std::runtime_error("Failed to initialize sha1 hasher");
-
-    // _response_parser = ();
+    _response_parser.reset();
     _sock_data_handler =  socket._socket.on_data([&](std::span<const char> data) {
         // std::cout << data;
         std::string s = std::string(data.begin(), data.end());
-        // std::clog << std::endl << "\e[0;34m" << s << "\e[0m" << std::endl;
+        std::clog << std::endl << "\e[0;34m" << s << "\e[0m" << std::endl;
         // debug_print(s);
         if(_response_parser.parse(s)) {
+            std::cout << '\t'<< socket._handshake->_secure_key_accept << "\n\t" << _response_parser.response.headers["sec-websocket-accept"] << "\n";
+            if(socket._handshake->_secure_key_accept != _response_parser.response.headers["sec-websocket-accept"])
+                throw std::runtime_error("Handshake Failed, sec-websocket-key mismatch.");
             _sock_data_handler.remove();
             delete socket._handshake;
             socket._handshake = NULL;
-
             socket.handlers.on_open.call();
         }
     });
@@ -117,18 +116,27 @@ websocket::socket::handshake_manager::handshake_manager(websocket::socket& socke
     req.headers["host"] = socket._url.get_host();
     req.headers["upgrade"] = "websocket";
     req.headers["connection"] = "upgrade";
-    _secure_key = generate_websocket_key();
-    req.headers["sec-websocket-key"] = base64::to_base64(_secure_key);
+    
+    _secure_key = base64::to_base64(generate_websocket_key());
+
+    req.headers["sec-websocket-key"] = _secure_key;
     req.headers["sec-websocket-version"] = "13";
-    std::cout << req.build() << std::endl << std::endl;
+    // std::cout << req.build() << std::endl << std::endl;
+
     _socket._socket << req.build();
+    
     // _sock_connect_handler = socket._socket.on_connect([&]() {
     //     // _sock_connect_handler.remove();
     // });
 
+
+    hash::sha1 hasher;
+    hasher.hash(_secure_key);
+    hasher.hash("258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
+    _secure_key_accept = base64::to_base64(hasher.get());
 }
 
 
 websocket::socket::handshake_manager::~handshake_manager() {
-    if(_hasher_ctx != NULL) EVP_MD_CTX_free(_hasher_ctx);
+    // if(_hasher_ctx != NULL) EVP_MD_CTX_free(_hasher_ctx);
 }

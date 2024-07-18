@@ -50,6 +50,7 @@ namespace http {
         bool is_header_done();
         bool is_done();
         bool parse(const std::string& str);
+        void reset();
     };
 
     struct response_parser {
@@ -66,5 +67,6 @@ namespace http {
 
         response_parser();
         bool parse(const std::string& response_string);
+        void reset();
     };
 }
