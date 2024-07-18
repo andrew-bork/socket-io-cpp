@@ -54,12 +54,12 @@ int main(int argc, char ** argv) {
     });
 
     net::socket a = net::connect(req.url.host.value(), "80");
-    a.on(net::socket::events::DATA, [&] (std::string s) {
+    a.on(net::socket::events::DATA, [&] (std::span<const char> s) {
         // std::cout << "\nServer: " << s.length() << " bytes" << std::endl;
         // debug_print(s.substr(0, 50));
         // debug_print(s.substr(s.length()-50));
         // std::cout << "\n";
-        if(parser.parse(s)) a.close();
+        if(parser.parse(std::string(s.begin(), s.end()))) a.close();
     });
     a.on(net::socket::DISCONNECT, []() {
         // std::cout << "welp\n";

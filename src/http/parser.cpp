@@ -87,6 +87,8 @@ http::request_parser::request_parser() {
     };
 }
 
+// #include <iostream>
+
 http::response_parser::response_parser() {
     llhttp_settings_init(&parser_settings);
     llhttp_init(&parser, HTTP_RESPONSE, &parser_settings);
@@ -94,6 +96,7 @@ http::response_parser::response_parser() {
 
 
     parser_settings.on_message_complete = [](llhttp_t* parser) {
+        // std::cout <<"huh\n";
         auto& res_parser = *static_cast<http::response_parser*>(parser->data);
         res_parser.body.close();
         res_parser.finished = true;
@@ -165,6 +168,8 @@ bool http::response_parser::parse(const std::string& str) {
     llhttp_errno err = llhttp_execute(&parser, str.data(), str.length());
     if(err == HPE_OK) {
         return finished;
+    }else if(err == HPE_PAUSED_UPGRADE) {
+        return true;
     }else {
         throw std::runtime_error(std::string(llhttp_errno_name(err)) + " " + std::string(parser.reason));
     }

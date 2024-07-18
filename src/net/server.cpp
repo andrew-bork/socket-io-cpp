@@ -5,7 +5,7 @@
 #include <cstring>
 
 int& net::server::fd() {
-    return _socket.fd;
+    return _socket.fd();
 }
 
 
@@ -95,7 +95,7 @@ net::server net::create_server(int port) {
 size_t clean_up_dead_sockets(std::vector<std::shared_ptr<net::socket>>& sockets, std::vector<pollfd>& pollfds) {
     size_t i = 0;
     for(size_t j = 0; j < sockets.size(); j ++) {
-        if(sockets[j]->fd != -1) {
+        if(sockets[j]->fd() != -1) {
             sockets[i] = sockets[j];
             pollfds[i] = pollfds[j];
 

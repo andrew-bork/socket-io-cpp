@@ -5,57 +5,78 @@
 #include <string>
 
 #include <list>
+#include "util/callback.hpp"
+#include "stream/readable.hpp"
+#include "stream/writable.hpp"
 
 namespace net {
-    struct socket {
-        int fd = -1;
-        int i = -1;
+    class socket : public stream::writable, public stream::readable{
+        public:
+            typedef std::function<void(void)> on_connect_handler;
+            typedef std::function<void(void)> on_disconnect_handler;
+            enum events {
+                CONNECT,
+                DATA,
+                DISCONNECT,
+            };
 
-        bool connected = false;
-        bool opened = false;
+            socket(int _fd);
+            socket(const socket& other);
+            socket(socket&& other);
+            ~socket();
 
-        enum events {
-            CONNECT,
-            DATA,
-            DISCONNECT,
-        };
+            
+            struct {
+                callback_list<on_connect_handler> on_connect;
+                callback_list<on_disconnect_handler> on_disconnect;
+            } handlers;
 
-        socket(int _fd);
-        socket(const socket& other);
-        socket(socket&& other);
-        ~socket();
 
+            // template<events E, typename F>
+            // void on(F f) {}
+
+            // template<>
+            // void on<events::CONNECT>(std::function<void()> f);
+            // template<>
+            // void on<events::DATA>(std::function<void(std::string)> f);
+            // template<>
+            // void on<events::DISCONNECT>(std::function<void()> f);
+
+            callback_list<on_connect_handler>::callback_manager on_connect(on_connect_handler f);
+            // callback_list<on_data_handler> on_data(on_data_handler f);
+            callback_list<on_disconnect_handler>::callback_manager on_disconnect(on_disconnect_handler f);
+
+            net::socket& on(events event, std::function<void()> handler);
+            net::socket& on(events event, stream::readable::on_data_handler handler);
+
+            inline int& fd() {
+                return _fd;
+            }
+            void close();
+
+            size_t operator>>(std::string& string);
+            size_t operator<<(const std::string string);
         
-        struct {
-            std::list<std::function<void()>> on_connect;
-            std::list<std::function<void(std::string)>> on_data;
-            std::list<std::function<void()>> on_disconnect;
-        } handlers;
+            net::socket& operator=(net::socket&&);
+            net::socket& operator=(const net::socket&);
 
 
-        // template<events E, typename F>
-        // void on(F f) {}
 
-        // template<>
-        // void on<events::CONNECT>(std::function<void()> f);
-        // template<>
-        // void on<events::DATA>(std::function<void(std::string)> f);
-        // template<>
-        // void on<events::DISCONNECT>(std::function<void()> f);
+        private:
+            int _fd = -1;
+            // int i = -1;
 
-        void on_connect(std::function<void(void)> f);
-        void on_data(std::function<void(std::string)> f);
-        void on_disconnect(std::function<void(void)> f);
+            bool connected = false;
+            bool opened = false;
 
-        net::socket& on(events event, std::function<void()> handler);
-        net::socket& on(events event, std::function<void(std::string)> handler);
+            size_t _send_buffer_size = 4096;
+            size_t _send_buffer_i = 0;
+            char* _send_buffer = NULL;
 
-        void close();
+            void _initialize_buffers();
+            void _destroy_buffers();
 
-        size_t operator>>(std::string& string);
-        size_t operator<<(const std::string string);
-    
-        net::socket& operator=(net::socket&&);
-        net::socket& operator=(const net::socket&);
+            bool _write(std::span<const char> data);
+            bool _drain();
     };
 };

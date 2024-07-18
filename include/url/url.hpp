@@ -23,6 +23,8 @@ namespace url {
         std::optional<std::string> fragment = std::nullopt;
 
         std::unordered_map<std::string, std::string> queries;
+
+        std::string get_host();
     };
     url parse(const std::string& url_string);
 }

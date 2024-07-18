@@ -11,22 +11,22 @@
 #define chk_bit(a,b) ((a&b) == b)
 
 void net::socket::close() {
-    if(fd != -1) {
-        ::close(fd);
-        fd = -1;
+    if(_fd != -1) {
+        ::close(_fd);
+        _fd = -1;
     }
 }
-net::socket::socket(int _fd) : fd(_fd) {
-    opened = fd != -1;
+net::socket::socket(int fd) : _fd(fd) {
+    opened = _fd != -1;
 }
 
 net::socket& net::socket::on(net::socket::events event, std::function<void()> handler) {
     switch(event) {
     case CONNECT:
-        handlers.on_connect.push_back(handler);
+        handlers.on_connect.add(handler);
         break;
     case DISCONNECT:
-        handlers.on_disconnect.push_back(handler);
+        handlers.on_disconnect.add(handler);
         break;
     default:
         throw std::runtime_error("\"CONNECT\" listener has the wrong type");
@@ -34,10 +34,10 @@ net::socket& net::socket::on(net::socket::events event, std::function<void()> ha
     return *this;
 }
 
-net::socket& net::socket::on(net::socket::events event, std::function<void(std::string)> handler) {
+net::socket& net::socket::on(net::socket::events event, stream::readable::on_data_handler handler) {
     switch(event) {
     case DATA:
-        handlers.on_data.push_back(handler);
+        stream::readable::handlers.on_data.add(handler);
         break;
     default:
         throw std::runtime_error("\"LISTEN\" listener has the wrong type");
@@ -46,12 +46,13 @@ net::socket& net::socket::on(net::socket::events event, std::function<void(std::
 }
 
 net::socket::~socket() {
+    _destroy_buffers();
     close();
 }
 
 size_t net::socket::operator<<(const std::string string) {
     size_t n_bytes = string.size();
-    ssize_t s = send(fd, &string[0], n_bytes, 0);
+    ssize_t s = send(_fd, &string[0], n_bytes, 0);
     if(s == -1) {
         throw std::runtime_error("Something went wrong with send.");
     }
@@ -62,7 +63,7 @@ size_t net::socket::operator>>(std::string& string) {
     string = "";
     char buf[4096];
 
-    ssize_t s = recv(fd, buf, 4095, 0);
+    ssize_t s = recv(_fd, buf, 4095, 0);
     if(s == -1) {
         perror("huh?");
         throw std::runtime_error("Recv failed");
@@ -75,24 +76,26 @@ size_t net::socket::operator>>(std::string& string) {
 }
 
 net::socket::socket(const net::socket& other) {
-    fd = dup(other.fd);
-    if(fd == -1) throw std::runtime_error("dup() failed.");
+    if(other._fd != -1) {
+        _fd = dup(other._fd);
+        if(_fd == -1) throw std::runtime_error("dup() failed.");
+    }
 }
 
 net::socket::socket(net::socket&& other) {
-    fd = other.fd;
-    other.fd = -1;
+    _fd = other._fd;
+    other._fd = -1;
 }
 
 net::socket& net::socket::operator=(net::socket&& other) {
-    fd = other.fd;
-    other.fd = -1;
+    _fd = other._fd;
+    other._fd = -1;
     return *this;
 }
 net::socket& net::socket::operator=(const net::socket& other) {
 
-    fd = dup(other.fd);
-    if(fd == -1) throw std::runtime_error("dup() failed.");
+    _fd = dup(other._fd);
+    if(_fd == -1) throw std::runtime_error("dup() failed.");
     
     return *this;
 }
@@ -126,15 +129,48 @@ net::socket& net::socket::operator=(const net::socket& other) {
 
 // }
 
-void net::socket::on_connect(std::function<void(void)> f) {
-    handlers.on_connect.push_back(f);
+callback_list<net::socket::on_connect_handler>::callback_manager net::socket::on_connect(net::socket::on_connect_handler f) {
+    return handlers.on_connect.add(f);
 }
 
-void net::socket::on_data(std::function<void(std::string)> f) {
-    handlers.on_data.push_back(f);
+// callback<std::function<void(std::string)>> net::socket::on_data(std::function<void(std::string)> f) {
+//     handlers.on_data.push_back(f);
+//     return callback<std::function<void(std::string)>>(handlers.on_data, handlers.on_data.end()--);
+// }
+
+callback_list<net::socket::on_disconnect_handler>::callback_manager net::socket::on_disconnect(net::socket::on_disconnect_handler f) {
+    return handlers.on_disconnect.add(f);
 }
 
-void net::socket::on_disconnect(std::function<void(void)> f) {
-    handlers.on_disconnect.push_back(f);
+void net::socket::_initialize_buffers() {
+    _send_buffer = new char[_send_buffer_size];
+    _send_buffer_i = 0;
 }
+
+void net::socket::_destroy_buffers() {
+    if(_send_buffer != NULL) {
+        delete _send_buffer;
+        _send_buffer = NULL;
+    }
+}
+
+bool net::socket::_write(std::span<const char> data) {
+    for(auto c : data) {
+        _send_buffer[_send_buffer_i++] = c;
+        if(_send_buffer_i == _send_buffer_size) {
+            _drain();
+        }
+    }
+    return _drain();
+}
+
+bool net::socket::_drain() {
+    ssize_t s = send(_fd, _send_buffer, _send_buffer_i, 0);
+    _send_buffer_i = 0;
+    if(s == -1) {
+        throw std::runtime_error("Something went wrong with send.");
+    }
+    return true;
+}
+
 

@@ -25,8 +25,8 @@ http::response http::get(http::request req) {
     // net::event_loop ev;
     auto sock = net::connect(req.url.host.value().c_str(), req.url.port.value_or("80").c_str());
     std::string out = "";
-    sock.on(net::socket::DATA,[&](std::string chk) {
-        out += chk;
+    sock.on(net::socket::DATA,[&](std::span<const char> chk) {
+        out += std::string(chk.begin(), chk.end());
     });
     sock << req.build();
     // ev.add(sock);

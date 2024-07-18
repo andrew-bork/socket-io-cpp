@@ -33,12 +33,12 @@ int main() {
         printf("Client Connected\n");
         
         ev.add(socket);
-        socket.on(net::socket::events::DATA, [&] (std::string data) { 
-            std::cout << "Client: " << data << std::endl;
+        socket.on_data([&] (std::span<const char> data) { 
+            std::cout << "Client: " << std::string(data.begin(), data.end()) << std::endl;
             socket << "Pong!";
         });
 
-        socket.on(net::socket::events::DISCONNECT, [] () {
+        socket.on_disconnect([] () {
             std::cout << "Goodbye\n";
         });
     });

@@ -4,3 +4,9 @@
 [submodule "llhttp"]
 	path = llhttp
 	url = https://github.com/nodejs/llhttp.git
+[submodule "tests/base64"]
+	path = tests/base64
+	url = https://github.com/tobiaslocker/base64.git
+[submodule "base64"]
+	path = base64
+	url = https://github.com/tobiaslocker/base64.git

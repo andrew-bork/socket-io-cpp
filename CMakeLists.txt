@@ -22,7 +22,7 @@ set(BUILD_STATIC_LIBS ON CACHE INTERNAL "")
 FetchContent_MakeAvailable(llhttp)
 
 
-
+find_package(OpenSSL REQUIRED)
 
 FILE(GLOB URL_SRC src/url/*.cpp)
 add_library(url ${URL_SRC})
@@ -38,6 +38,13 @@ target_link_libraries(http llhttp_static)
 FILE(GLOB WEBSOCKET_SRC src/websocket/*.cpp)
 add_library(websocket ${WEBSOCKET_SRC})
 target_link_libraries(websocket http)
+target_link_libraries(websocket OpenSSL::Crypto)
+
+
+FILE(GLOB STREAM_SRC src/stream/*.cpp)
+add_library(stream ${STREAM_SRC})
+# target_link_libraries(stream http)
+# target_link_libraries(stream OpenSSL::Crypto)
 
 add_executable(server tests/server.cpp)
 target_link_libraries(server net)
@@ -49,6 +56,8 @@ add_executable(curl tests/curl.cpp)
 target_link_libraries(curl http)
 add_executable(ws-client tests/ws-client.cpp)
 target_link_libraries(ws-client websocket)
+add_executable(test-stream tests/stream.cpp)
+target_link_libraries(test-stream stream)
 
 # add_executable(parse tests/parse.cpp)
 # add_executable(hserv tests/http_server.cpp)

@@ -179,3 +179,12 @@ url::url url::parse(const std::string& url_string) {
 
     return returned;
 }
+
+
+std::string url::url::get_host() {
+    if(!host.has_value()) throw std::runtime_error("Host has no value.");
+    if(port.has_value()) {
+        return host.value() + ":" + port.value();
+    }
+    return host.value();
+}

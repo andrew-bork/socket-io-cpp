@@ -23,8 +23,8 @@ int main(int argc, char ** argv) {
 
     for(int i = 0; i < n_connections; i ++) {
         auto& a = connections.emplace_back(net::connect("localhost", "3003"));
-        a.on(net::socket::events::DATA, [&] (std::string s) {
-            std::cout << "Server: " << s << std::endl;
+        a.on(net::socket::events::DATA, [&] (std::span<const char> s) {
+            std::cout << "Server: " << std::string(s.begin(), s.end()) << std::endl;
             a.close();
         });
         a.on(net::socket::DISCONNECT, []() {
