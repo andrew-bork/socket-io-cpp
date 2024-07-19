@@ -97,10 +97,10 @@ websocket::socket::handshake_manager::handshake_manager(websocket::socket& socke
     _sock_data_handler =  socket._socket.on_data([&](std::span<const char> data) {
         // std::cout << data;
         std::string s = std::string(data.begin(), data.end());
-        std::clog << std::endl << "\e[0;34m" << s << "\e[0m" << std::endl;
+        // std::clog << std::endl << "\e[0;34m" << s << "\e[0m" << std::endl;
         // debug_print(s);
         if(_response_parser.parse(s)) {
-            std::cout << '\t'<< socket._handshake->_secure_key_accept << "\n\t" << _response_parser.response.headers["sec-websocket-accept"] << "\n";
+            // std::cout << '\t'<< socket._handshake->_secure_key_accept << "\n\t" << _response_parser.response.headers["sec-websocket-accept"] << "\n";
             if(socket._handshake->_secure_key_accept != _response_parser.response.headers["sec-websocket-accept"])
                 throw std::runtime_error("Handshake Failed, sec-websocket-key mismatch.");
             _sock_data_handler.remove();

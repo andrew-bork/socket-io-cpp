@@ -1,8 +1,8 @@
 #include "stream/writable.hpp"
 #include "unistd.h"
-
+#include <ctype.h>
 class print_stream : public stream::writable {
-    size_t _N = 0;
+    size_t _buffer_size = 0;
     size_t _i = 0;
 
     char* _buffer = NULL;
@@ -13,9 +13,10 @@ class print_stream : public stream::writable {
             _buffer[_i++] = c;
             if(c == '\n') {
                 should_drain = true;
-            }else if(_i == _N) {
+            }else if(_i == _buffer_size) {
                 _drain();
             }
+
 
         }
         if(should_drain) return _drain();
@@ -30,9 +31,9 @@ class print_stream : public stream::writable {
 
     public:
         print_stream(size_t N = 4096) {
-            _N = N;
+            _buffer_size = N;
             if(_buffer != NULL) delete _buffer;
-            _buffer = new char[_N];
+            _buffer = new char[_buffer_size];
             _i = 0;
         }
         ~print_stream() {
