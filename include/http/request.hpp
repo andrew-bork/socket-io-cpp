@@ -5,6 +5,7 @@
 #include "url/url.hpp"
 #include <optional>
 namespace http {
+
     struct request {
         enum request_type {
             GET, POST

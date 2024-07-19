@@ -50,7 +50,7 @@ http::request_parser::request_parser() {
         return 0;
     };
 
-    parser_settings.on_header_field_complete = [](llhttp_t* parser) {        
+    parser_settings.on_header_value_complete = [](llhttp_t* parser) {        
         auto& req_parser = *static_cast<http::request_parser*>(parser->data);
         
         std::transform(req_parser.header.begin(), req_parser.header.end(), req_parser.header.begin(),
@@ -93,8 +93,6 @@ http::request_parser::request_parser() {
     };
 }
 
-#include <iostream>
-
 http::response_parser::response_parser() {
     llhttp_settings_init(&parser_settings);
     llhttp_init(&parser, HTTP_RESPONSE, &parser_settings);
@@ -121,12 +119,11 @@ http::response_parser::response_parser() {
         return 0;
     };
 
-    parser_settings.on_header_field_complete = [](llhttp_t* parser) {        
+    parser_settings.on_header_value_complete = [](llhttp_t* parser) {        
         auto& res_parser = *static_cast<http::response_parser*>(parser->data);
         std::transform(res_parser.header.begin(), res_parser.header.end(), res_parser.header.begin(),
             [](unsigned char c){ return std::tolower(c); });
         res_parser.response.headers[res_parser.header] = res_parser.value;
-        std::cout << "HEADER " <<  res_parser.header << ":" << res_parser.value << "\n";
         res_parser.header = "";
         res_parser.value = "";
         return 0;
