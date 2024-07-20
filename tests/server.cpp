@@ -34,7 +34,14 @@ int main() {
         
         ev.add(socket);
         socket.on_data([&] (std::span<const char> data) { 
-            std::cout << "Client: " << std::string(data.begin(), data.end()) << std::endl;
+            std::cout << "Client: " << std::hex << "\n"; // << std::string(data.begin(), data.end()) << std::endl;
+            for(char c : data) {
+                std::cout << "\t" << (int) (unsigned char) c;
+                if(isprint(c)) {
+                    std::cout << " (" << c << ")";
+                }
+                std::cout << std::endl;
+            }
             socket << "Pong!";
         });
 

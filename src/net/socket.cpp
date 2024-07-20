@@ -18,6 +18,9 @@ void net::socket::close() {
 }
 net::socket::socket(int fd) : _fd(fd) {
     opened = _fd != -1;
+    if(opened) {
+        _initialize_buffers();
+    }
 }
 
 net::socket& net::socket::on(net::socket::events event, std::function<void()> handler) {
@@ -79,24 +82,29 @@ net::socket::socket(const net::socket& other) {
     if(other._fd != -1) {
         _fd = dup(other._fd);
         if(_fd == -1) throw std::runtime_error("dup() failed.");
+        _initialize_buffers();
     }
 }
 
 net::socket::socket(net::socket&& other) {
     _fd = other._fd;
     other._fd = -1;
+    _send_buffer = other._send_buffer;
+    // _reci
 }
 
 net::socket& net::socket::operator=(net::socket&& other) {
     _fd = other._fd;
     other._fd = -1;
+    _send_buffer = other._send_buffer;
     return *this;
 }
 net::socket& net::socket::operator=(const net::socket& other) {
-
-    _fd = dup(other._fd);
-    if(_fd == -1) throw std::runtime_error("dup() failed.");
-    
+    if(other._fd != -1){
+        _fd = dup(other._fd);
+        if(_fd == -1) throw std::runtime_error("dup() failed.");
+        _initialize_buffers();
+    }
     return *this;
 }
 

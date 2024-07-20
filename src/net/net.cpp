@@ -66,6 +66,7 @@ net::socket net::connect(std::string address, std::string port) {
 
     if(fd < 0) {
         perror("coc");
+
         throw std::runtime_error("Couldn't connect");
     }
 

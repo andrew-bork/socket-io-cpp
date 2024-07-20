@@ -19,11 +19,14 @@ namespace stream {
                 size_t s = strlen(data);
                 return _write(std::span<const char>(data, s));
             }
+            inline bool write(const char data) {
+                return _write(std::span<const char>(&data, 1));
+            }
             // bool write(const char* data);
             // bool write();
             // bool write();
             // bool write();
-
+            inline bool drain() { return _drain(); }
         private:
             virtual bool _write(std::span<const char> data) = 0;
             virtual bool _drain() = 0;

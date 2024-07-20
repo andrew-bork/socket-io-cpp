@@ -27,7 +27,7 @@ namespace websocket {
         ~socket();
         
 
-        void send(const std::string& data);
+        void send(std::span<const char> data);
 
         void initiate_client_handshake();
 
@@ -54,9 +54,16 @@ namespace websocket {
             url::url _url;
             net::socket _socket;
 
+            size_t _send_buffer_max_size = 4096;
+            size_t _recieve_buffer_max_size = 4096;
+            std::vector<const unsigned char> _send_buffer;
+            std::vector<const unsigned char> _recieve_buffer;
+
+            callback_list<net::socket::on_data_handler>::callback_manager _sock_data_handler;
+
             struct handshake_manager {
                 websocket::socket& _socket;
-                callback_list<net::socket::on_connect_handler>::callback_manager _sock_connect_handler;
+                // callback_list<net::socket::on_connect_handler>::callback_manager _sock_connect_handler;
                 callback_list<stream::readable::on_data_handler>::callback_manager _sock_data_handler;
                 std::string _secure_key, _secure_key_accept;
                 http::response_parser _response_parser;

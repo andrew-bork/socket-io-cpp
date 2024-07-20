@@ -51,12 +51,49 @@ void websocket::socket::initiate_client_handshake() {
     _handshake = new websocket::socket::handshake_manager(*this);
 }
 
-void websocket::socket::send(const std::string& data) {
+void websocket::socket::send(std::span<const char> data) {
     // socket << data;
+    // data.size();
+    bool masked = true;
+
+    uint64_t payload_length = data.size();
+    unsigned char FIN = 0b10000000, CONT = 0b0000, TEXT = 0b1, BIN = 0b10, CLOSE = 0b100, PING = 0b101, PONG = 0b110;
+    unsigned char op_byte = FIN | TEXT;
+    std::cout << (int) op_byte << std::endl;
+    _socket.write(op_byte);
+    if(payload_length > 0xffff) {
+        _socket.write(127 | (masked ? 0x80 : 0));
+        _socket.write((payload_length & 0xff000000) >> 24);
+        _socket.write((payload_length & 0xff0000) >> 16);
+        _socket.write((payload_length & 0xff00) >> 8);
+        _socket.write(payload_length & 0xff);
+    }else if(payload_length > 125) {
+        _socket.write(126 | (masked ? 0x80 : 0));
+        _socket.write((payload_length & 0xff00) >> 8);
+        _socket.write(payload_length & 0xff);
+    }else {
+        _socket.write(payload_length | (masked ? 0x80 : 0));
+    }
+    _socket.write(data);
+
+    if(masked) {
+        std::array<char, 4> mask = { 0x01, 0x02, 0x03, 0x04 };
+        size_t i = 0;
+        for(char c : data) {
+            _socket.write(c ^ mask[i&0b11]);
+            i++;
+        }
+    }else {
+        _socket.write(data);
+    }
+
+    _socket.drain();
+    // _send_buffer.resize()
+    // std::swap();
 }
 
 void websocket::socket::close() {
-    
+
 }
 
 // void websocket::socket::on_open(std::function<void(void)> f) {
@@ -75,6 +112,7 @@ void websocket::socket::set_host(std::string host) {
 
 websocket::socket::~socket() {
     if(_handshake != NULL) delete _handshake;
+    _sock_data_handler.remove();
 }
 
 // static void debug_print(std::string s) {
@@ -93,7 +131,6 @@ websocket::socket::~socket() {
 
 websocket::socket::handshake_manager::handshake_manager(websocket::socket& socket) : _socket(socket) {
 
-    _response_parser.reset();
     _sock_data_handler =  socket._socket.on_data([&](std::span<const char> data) {
         // std::cout << data;
         std::string s = std::string(data.begin(), data.end());
@@ -139,4 +176,6 @@ websocket::socket::handshake_manager::handshake_manager(websocket::socket& socke
 
 websocket::socket::handshake_manager::~handshake_manager() {
     // if(_hasher_ctx != NULL) EVP_MD_CTX_free(_hasher_ctx);
+    _sock_data_handler.remove();
+
 }

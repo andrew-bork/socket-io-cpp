@@ -16,15 +16,6 @@ namespace hash {
             if(1 != EVP_DigestInit_ex(_hasher_ctx, EVP_sha1(), NULL))
                 throw std::runtime_error("Failed to initialize SHA1 Hasher.");
 
-            // if(1 != EVP_DigestUpdate(mdctx, message, message_len))
-                // handleErrors();
-
-            // if((*digest = (unsigned char *)OPENSSL_malloc(EVP_MD_size(EVP_sha256()))) == NULL)
-            //     handleErrors();
-
-            // if(1 != EVP_DigestFinal_ex(mdctx, *digest, digest_len))
-            //     handleErrors();
-
         } 
 
         inline void hash(const std::string& data) {

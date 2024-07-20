@@ -16,11 +16,18 @@ struct callback_list {
         typedef typename std::list<callback>::iterator iterator;
         iterator curr;
 
-        callback_manager() {}
+        bool removed = false;
+
+        callback_manager() {
+            removed = true;
+        }
         callback_manager(iterator _curr) : curr(_curr) {}
 
         void remove() {
-            (*curr).removed = true;
+            if(!removed) {
+                (*curr).removed = true;
+                removed = true;
+            }
         }
     };
 
