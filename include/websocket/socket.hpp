@@ -56,8 +56,8 @@ namespace websocket {
 
             size_t _send_buffer_max_size = 4096;
             size_t _recieve_buffer_max_size = 4096;
-            std::vector<const unsigned char> _send_buffer;
-            std::vector<const unsigned char> _recieve_buffer;
+            std::vector<char> _send_buffer;
+            std::vector<char> _recieve_buffer;
 
             callback_list<net::socket::on_data_handler>::callback_manager _sock_data_handler;
 

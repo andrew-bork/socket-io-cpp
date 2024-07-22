@@ -44,6 +44,7 @@ int main() {
             }
             socket << "Pong!";
         });
+        // socket << 
 
         socket.on_disconnect([] () {
             std::cout << "Goodbye\n";
@@ -54,7 +55,7 @@ int main() {
 
     server.listen();
 
-    ev.add(server);
+    // ev.add(server);
 
     ev.run();
 

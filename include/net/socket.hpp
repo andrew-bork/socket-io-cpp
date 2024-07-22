@@ -5,12 +5,17 @@
 #include <string>
 
 #include <list>
+
 #include "util/callback.hpp"
 #include "stream/readable.hpp"
 #include "stream/writable.hpp"
+#include "net/event_loop.hpp"
+
+#include "ev.h"
+
 
 namespace net {
-    class socket : public stream::writable, public stream::readable{
+    class socket : public stream::writable, public stream::readable, public net::watchable {
         public:
             typedef std::function<void(void)> on_connect_handler;
             typedef std::function<void(void)> on_disconnect_handler;
@@ -61,6 +66,9 @@ namespace net {
             net::socket& operator=(const net::socket&);
 
 
+            inline net::event_loop* loop() {
+                return _loop;
+            }
 
         private:
             int _fd = -1;
@@ -73,10 +81,25 @@ namespace net {
             size_t _send_buffer_i = 0;
             char* _send_buffer = NULL;
 
+            
+            // struct ev_loop* _loop;
+
+            net::event_loop* _loop;
+            ev_io _read_watcher, _write_watcher;
+
+            void _initialize_watchers();
+            void _destroy_watchers();
+
             void _initialize_buffers();
             void _destroy_buffers();
 
             bool _write(std::span<const char> data);
             bool _drain();
+
+            void _attach();
+            void _detach();
+
+            // static void _on_readable(EV_P_ ev_io*w, int revents);
+            // static void _on_writable(EV_P_ ev_io*w, int revents);
     };
 };

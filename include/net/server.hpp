@@ -10,13 +10,15 @@
 #include <thread> 
 #include <list>
 
+#include "net/socket.hpp"
+
 namespace net {
     struct server {
         
         typedef std::function<void(net::socket&)> on_connect_handler;
         typedef std::function<void(void)> on_listen_handler;
 
-        socket _socket;
+        net::socket _socket;
         std::list<net::socket> _connections;
         
         bool listening = false;
@@ -42,8 +44,8 @@ namespace net {
 
         void listen(int backlog = 16);
 
-        net::server& on(events event, std::function<void(net::socket&)> handler);
-        net::server& on(events event, std::function<void()> handler);
+        net::server& on(events event, on_connect_handler handler);
+        net::server& on(events event, on_listen_handler handler);
 
         net::server& operator=(const net::server&);
         net::server& operator=(net::server&&);
