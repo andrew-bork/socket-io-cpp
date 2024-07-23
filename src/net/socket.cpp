@@ -207,12 +207,8 @@ bool net::socket::_drain() {
 //     socket.handlers.on_connect.call();
 // }
 
-#include <iostream>
-
 void net::socket::_initialize_watchers() {
-    std::cout << "Initializing Watchers\n";
     ev_io_init(&_read_watcher, [](EV_P_ ev_io* w, int revents) {
-        std::cout << "Recieved data\n";
         auto& socket = *static_cast<net::socket *>(w->data);
         stream::readable& readable = socket;
         std::string data;
@@ -229,11 +225,10 @@ void net::socket::_initialize_watchers() {
         }
     }, _fd, EV_READ);
     _read_watcher.data = static_cast<void*>(this);
-    _loop->add_watcher(_read_watcher);
+    loop()->add_watcher(_read_watcher);
     // ev_io_start(loop, &read_watcher);
 
     ev_io_init(&_write_watcher, [](EV_P_ ev_io* w, int revents) {
-        std::cout << "Connected\n";
 
         auto& socket = *static_cast<net::socket *>(w->data);
         // ev_io_stop(;, w);
@@ -243,14 +238,14 @@ void net::socket::_initialize_watchers() {
     }, _fd, EV_WRITE);
     _write_watcher.data = static_cast<void*>(this);
     // ev_io_start(loop, &write_watcher);
-    _loop->add_watcher(_write_watcher);
+    loop()->add_watcher(_write_watcher);
 }
 
 void net::socket::_destroy_watchers() {
-    if(ev_is_active(&_read_watcher)) _loop->remove_watcher(_read_watcher);
-    if(ev_is_active(&_write_watcher)) _loop->remove_watcher(_write_watcher);
+    if(ev_is_active(&_read_watcher)) loop()->remove_watcher(_read_watcher);
+    if(ev_is_active(&_write_watcher)) loop()->remove_watcher(_write_watcher);
 
-    _loop = NULL;
+    // _loop = NULL;
 }
 
 // void net::socket::add(event_loop& loop) {

@@ -19,7 +19,7 @@ net::server::~server() {
 net::server& net::server::on(net::server::events event, net::server::on_connect_handler handler) {
     switch(event) {
     case CONNECT:
-        handlers.on_connect.push_back(handler);
+        handlers.on_connect.add(handler);
         break;
     default:
         throw std::runtime_error("\"CONNECT\" listener has the wrong type");
@@ -30,7 +30,7 @@ net::server& net::server::on(net::server::events event, net::server::on_connect_
 net::server& net::server::on(net::server::events event, net::server::on_listen_handler handler) {
     switch(event) {
     case LISTEN:
-        handlers.on_listen.push_back(handler);
+        handlers.on_listen.add(handler);
         break;
     default:
         throw std::runtime_error("\"LISTEN\" listener has the wrong type");
@@ -92,20 +92,20 @@ net::server net::create_server(int port) {
 }
 
 
-size_t clean_up_dead_sockets(std::vector<std::shared_ptr<net::socket>>& sockets, std::vector<pollfd>& pollfds) {
-    size_t i = 0;
-    for(size_t j = 0; j < sockets.size(); j ++) {
-        if(sockets[j]->fd() != -1) {
-            sockets[i] = sockets[j];
-            pollfds[i] = pollfds[j];
+// size_t clean_up_dead_sockets(std::vector<std::shared_ptr<net::socket>>& sockets, std::vector<pollfd>& pollfds) {
+//     size_t i = 0;
+//     for(size_t j = 0; j < sockets.size(); j ++) {
+//         if(sockets[j]->fd() != -1) {
+//             sockets[i] = sockets[j];
+//             pollfds[i] = pollfds[j];
 
-            i++;
-        }
-    }
-    sockets.resize(i);
+//             i++;
+//         }
+//     }
+//     sockets.resize(i);
 
-    return i;
-}
+//     return i;
+// }
 
 
 
@@ -304,3 +304,53 @@ net::server& net::server::operator=(net::server&& other) {
 //         thread.join();
 //     }
 // }
+
+
+void net::server::_initialize_watchers() {
+    // std::cout << "Initializing Watchers\n";
+    ev_io_init(&_read_watcher, [](EV_P_ ev_io* w, int revents) {
+        // std::cout << "Recieved data\n";
+        auto& server = *static_cast<net::server*>(w->data);
+
+        int client_fd = accept(server.fd(), NULL, NULL);
+        if(client_fd < 0) {
+            throw std::runtime_error("Accept failed");
+        }
+        
+        auto& client = server._connections.emplace_back(client_fd);
+        server.handlers.on_connect.call(client);
+
+        if(server.fd() == -1 || !server.listening) server.loop()->remove_watcher(*w);// ev_io_stop(watcher->loop, w);
+    }, fd(), EV_READ);
+    _read_watcher.data = static_cast<void*>(this);
+    loop()->add_watcher(_read_watcher);
+    // ev_io_start(loop, &read_watcher);
+
+    // ev_io_init(&_write_watcher, [](EV_P_ ev_io* w, int revents) {
+    //     std::cout << "Connected\n";
+
+    //     auto& socket = *static_cast<net::socket *>(w->data);
+    //     // ev_io_stop(;, w);
+    //     socket.loop()->remove_watcher(*w);
+    //     socket.handlers.on_connect.call();
+        
+    // }, _fd, EV_WRITE);
+    // _write_watcher.data = static_cast<void*>(this);
+    // // ev_io_start(loop, &write_watcher);
+    // loop()->add_watcher(_write_watcher);
+}
+
+void net::server::_destroy_watchers() {
+    if(ev_is_active(&_read_watcher)) loop()->remove_watcher(_read_watcher);
+    // if(ev_is_active(&_write_watcher)) loop()->remove_watcher(_write_watcher);
+
+    // _loop = NULL;
+}
+
+
+void net::server::_attach() {
+    _initialize_watchers();
+}
+void net::server::_detach() {
+    _destroy_watchers();
+}
