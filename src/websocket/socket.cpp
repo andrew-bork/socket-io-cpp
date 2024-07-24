@@ -176,31 +176,31 @@ bool websocket::socket::frame_parser::parse(std::span<const char> data) {
                 }
                 break;
             case PAYLOAD_LENGTH_2:
-                payload_length |= static_cast<size_t>(c) << 7;
+                payload_length |= static_cast<size_t>(c) << 56;
                 state = PAYLOAD_LENGTH_3;
                 break;
             case PAYLOAD_LENGTH_3:
-                payload_length |= static_cast<size_t>(c) << 6;
+                payload_length |= static_cast<size_t>(c) << 48;
                 state = PAYLOAD_LENGTH_4;
                 break;
             case PAYLOAD_LENGTH_4:
-                payload_length |= static_cast<size_t>(c) << 5;
+                payload_length |= static_cast<size_t>(c) << 40;
                 state = PAYLOAD_LENGTH_5;
                 break;
             case PAYLOAD_LENGTH_5:
-                payload_length |= static_cast<size_t>(c) << 4;
+                payload_length |= static_cast<size_t>(c) << 32;
                 state = PAYLOAD_LENGTH_6;
                 break;
             case PAYLOAD_LENGTH_6:
-                payload_length |= static_cast<size_t>(c) << 3;
+                payload_length |= static_cast<size_t>(c) << 24;
                 state = PAYLOAD_LENGTH_7;
                 break;
             case PAYLOAD_LENGTH_7:
-                payload_length |= static_cast<size_t>(c) << 2;
+                payload_length |= static_cast<size_t>(c) << 16;
                 state = PAYLOAD_LENGTH_8;
                 break;
             case PAYLOAD_LENGTH_8:
-                payload_length |= static_cast<size_t>(c) << 1;
+                payload_length |= static_cast<size_t>(c) << 8;
                 state = PAYLOAD_LENGTH_9;
                 break;
             case PAYLOAD_LENGTH_9:

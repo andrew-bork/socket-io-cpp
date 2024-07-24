@@ -3,6 +3,7 @@
 #include <list>
 #include <chrono>
 #include <vector>
+#include <stdexcept>
 
 #include "ev.h"
 
