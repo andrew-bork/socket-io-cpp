@@ -15,6 +15,8 @@ namespace websocket {
     struct socket {
 
         typedef std::function<void(void)> on_open_handler;
+        typedef std::function<void(int, std::span<const char>)> on_close_handler;
+        typedef std::function<void(std::span<const char>)> on_pong_handler;
         typedef std::function<void(std::span<const char>)> on_message_handler;
 
         // typedef std::function<void(void)> ;
@@ -35,10 +37,13 @@ namespace websocket {
 
         void set_host(std::string host);
 
+        void ping(std::span<const char> data);
 
         struct {
             callback_list<on_open_handler> on_open;
             callback_list<on_message_handler> on_message;
+            callback_list<on_close_handler> on_close;
+            callback_list<on_pong_handler> on_pong;
         } handlers;
 
         inline callback_list<on_open_handler>::callback_manager on_open(on_open_handler f) {
@@ -48,14 +53,28 @@ namespace websocket {
             return handlers.on_message.add(f);
         }
 
+        inline callback_list<on_close_handler>::callback_manager on_close(on_close_handler f) {
+            return handlers.on_close.add(f);
+        }
+
+        inline callback_list<on_pong_handler>::callback_manager on_pong(on_pong_handler f) {
+            return handlers.on_pong.add(f);
+        }
+
         net::socket& connection();
 
         private: 
+            void _initialize();
+            void _pong(std::span<const char> data);
+            void _send(std::span<const char> data, bool finish = false, bool masked = false, frame_options opcode = TEXT);
+
             url::url _url;
             net::socket _socket;
 
-            size_t _send_buffer_max_size = 4096;
-            size_t _recieve_buffer_max_size = 4096;
+            bool _masked = true;
+
+            // size_t _send_buffer_max_size = 4096;
+            // size_t _recieve_buffer_max_size = 4096;
             std::vector<char> _send_buffer;
             std::vector<char> _recieve_buffer;
 
@@ -74,6 +93,49 @@ namespace websocket {
                 handshake_manager(websocket::socket& socket);
                 ~handshake_manager();
             };
+
+            struct frame_parser {
+                enum {
+                    OPCODE,
+
+                    PAYLOAD_LENGTH_1,
+                    PAYLOAD_LENGTH_2,
+                    PAYLOAD_LENGTH_3,
+                    PAYLOAD_LENGTH_4,
+                    PAYLOAD_LENGTH_5,
+                    PAYLOAD_LENGTH_6,
+                    PAYLOAD_LENGTH_7,
+                    PAYLOAD_LENGTH_8,
+                    PAYLOAD_LENGTH_9,
+
+                    MASKING_KEY_1,
+                    MASKING_KEY_2,
+                    MASKING_KEY_3,
+                    MASKING_KEY_4,
+
+                    PAYLOAD,
+                    DONE,
+
+                } state;
+                bool finish = false;
+                unsigned char opcode = 0;
+
+                size_t payload_length, i;
+
+                bool masked = false;
+                int mask = 0;
+
+                std::vector<char> payload;
+                
+                std::function<void(std::span<const char>)> on_close = [](std::span<const char>){};
+                std::function<void(std::span<const char>)> on_ping = [](std::span<const char>){};
+                std::function<void(std::span<const char>)> on_pong = [](std::span<const char>){};
+                std::function<void(std::span<const char>)> on_data_frame = [](std::span<const char>){};
+
+                bool parse(std::span<const char> data);
+            };
+
+            frame_parser _frame_parser;
 
             handshake_manager* _handshake = NULL;
     };

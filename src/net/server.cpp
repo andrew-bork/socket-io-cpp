@@ -304,24 +304,24 @@ net::server& net::server::operator=(net::server&& other) {
 //         thread.join();
 //     }
 // }
+void net::server::_on_readable(EV_P_ ev_io* w, int revents) {
+    // std::cout << "Recieved data\n";
+    auto& server = *static_cast<net::server*>(w->data);
 
+    int client_fd = accept(server.fd(), NULL, NULL);
+    if(client_fd < 0) {
+        throw std::runtime_error("Accept failed");
+    }
+    
+    auto& client = server._connections.emplace_back(client_fd);
+    server.handlers.on_connect.call<net::socket&>(client);
+
+    if(server.fd() == -1 || !server.listening) server.loop()->remove_watcher(*w);// ev_io_stop(watcher->loop, w);
+}
 
 void net::server::_initialize_watchers() {
     // std::cout << "Initializing Watchers\n";
-    ev_io_init(&_read_watcher, [](EV_P_ ev_io* w, int revents) {
-        // std::cout << "Recieved data\n";
-        auto& server = *static_cast<net::server*>(w->data);
-
-        int client_fd = accept(server.fd(), NULL, NULL);
-        if(client_fd < 0) {
-            throw std::runtime_error("Accept failed");
-        }
-        
-        auto& client = server._connections.emplace_back(client_fd);
-        server.handlers.on_connect.call(client);
-
-        if(server.fd() == -1 || !server.listening) server.loop()->remove_watcher(*w);// ev_io_stop(watcher->loop, w);
-    }, fd(), EV_READ);
+    ev_io_init(&_read_watcher, &net::server::_on_readable, fd(), EV_READ);
     _read_watcher.data = static_cast<void*>(this);
     loop()->add_watcher(_read_watcher);
     // ev_io_start(loop, &read_watcher);

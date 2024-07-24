@@ -26,6 +26,7 @@ namespace net {
             void _initialize_watchers();
             void _destroy_watchers();
 
+            static void _on_readable(EV_P_ ev_io* w, int revents);
 
         public: 
             typedef std::function<void(net::socket&)> on_connect_handler;

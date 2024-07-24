@@ -78,8 +78,9 @@ size_t net::socket::operator>>(std::string& string) {
 
     return s;
 }
-
+// #include <iostream>
 net::socket::socket(const net::socket& other) {
+    // std::cout << "Copied socket\n";
     if(other._fd != -1) {
         _fd = dup(other._fd);
         if(_fd == -1) throw std::runtime_error("dup() failed.");
@@ -88,19 +89,27 @@ net::socket::socket(const net::socket& other) {
 }
 
 net::socket::socket(net::socket&& other) {
+    // std::cout << "Moved socket\n";
+
     _fd = other._fd;
     other._fd = -1;
     _send_buffer = other._send_buffer;
+    other._send_buffer = NULL;
     // _reci
 }
 
 net::socket& net::socket::operator=(net::socket&& other) {
+    // std::cout << "Moved socket\n";
+
     _fd = other._fd;
     other._fd = -1;
     _send_buffer = other._send_buffer;
+    other._send_buffer = NULL;
     return *this;
 }
 net::socket& net::socket::operator=(const net::socket& other) {
+    // std::cout << "Copied socket\n";
+
     if(other._fd != -1){
         _fd = dup(other._fd);
         if(_fd == -1) throw std::runtime_error("dup() failed.");
@@ -170,10 +179,12 @@ bool net::socket::_write(std::span<const char> data) {
             _drain();
         }
     }
+    if(batch_send) return false;
     return _drain();
 }
 
 bool net::socket::_drain() {
+    batch_send = false;
     ssize_t s = send(_fd, _send_buffer, _send_buffer_i, 0);
     _send_buffer_i = 0;
     if(s == -1) {
@@ -207,23 +218,26 @@ bool net::socket::_drain() {
 //     socket.handlers.on_connect.call();
 // }
 
+
+static void on_readable(EV_P_ ev_io* w, int revents) {
+    auto& socket = *static_cast<net::socket *>(w->data);
+    stream::readable& readable = socket;
+    std::string data;
+    ssize_t result = socket >> data;
+    if(result == 0) {
+        socket.handlers.on_disconnect.call();
+        // readable
+        readable.handlers.on_close.call();
+        socket.close();
+        socket.loop()->remove_watcher(*w);
+    }else {
+        readable.handlers.on_data.call(std::span<const char>(data.begin(), data.end()));
+        if(socket.fd() == -1) socket.loop()->remove_watcher(*w);
+    }
+}
+
 void net::socket::_initialize_watchers() {
-    ev_io_init(&_read_watcher, [](EV_P_ ev_io* w, int revents) {
-        auto& socket = *static_cast<net::socket *>(w->data);
-        stream::readable& readable = socket;
-        std::string data;
-        ssize_t result = socket >> data;
-        if(result == 0) {
-            socket.handlers.on_disconnect.call();
-            // readable
-            readable.handlers.on_close.call();
-            socket.close();
-            socket.loop()->remove_watcher(*w);
-        }else {
-            readable.handlers.on_data.call(std::span<const char>(data.begin(), data.end()));
-            if(socket.fd() == -1) socket.loop()->remove_watcher(*w);
-        }
-    }, _fd, EV_READ);
+    ev_io_init(&_read_watcher, &on_readable, _fd, EV_READ);
     _read_watcher.data = static_cast<void*>(this);
     loop()->add_watcher(_read_watcher);
     // ev_io_start(loop, &read_watcher);
@@ -242,6 +256,7 @@ void net::socket::_initialize_watchers() {
 }
 
 void net::socket::_destroy_watchers() {
+    if(loop() == NULL) return;
     if(ev_is_active(&_read_watcher)) loop()->remove_watcher(_read_watcher);
     if(ev_is_active(&_write_watcher)) loop()->remove_watcher(_write_watcher);
 

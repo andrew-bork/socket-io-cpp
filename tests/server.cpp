@@ -20,10 +20,17 @@ void interrupt_handler(int code) {
 
 
 
-int main() {
+int main(int argc, char ** argv) {
     
+    
+    short port = 3000;
+    if(argc >= 2) {
+        port = atoi(argv[1]);
+    }
+
+
     net::event_loop ev;
-    server = net::create_server(3003);
+    server = net::create_server(port);
 
     server.on(net::server::LISTEN, []() {
         printf("Server listening on \"localhost:3000\".\n");
@@ -55,7 +62,7 @@ int main() {
 
     server.listen();
 
-    // ev.add(server);
+    ev.add(server);
 
     ev.run();
 

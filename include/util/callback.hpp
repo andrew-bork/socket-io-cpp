@@ -34,8 +34,8 @@ struct callback_list {
     std::list<callback> handlers;
 
     callback_manager add(T function) {
-        handlers.emplace_back(function);
-        return callback_manager(--handlers.end());
+        handlers.emplace_front(function);
+        return callback_manager(handlers.begin());
     }
 
     template<class... Ts>

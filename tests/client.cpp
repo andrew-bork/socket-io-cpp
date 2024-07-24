@@ -6,28 +6,30 @@
 
 int main(int argc, char ** argv) {
     
-    int n_connections = 1;
+    short port = 3000;
     if(argc >= 2) {
-        n_connections = atoi(argv[1]);
+        port = atoi(argv[1]);
     }
     // std::vector<std::shared_ptr<net::socket>> conns;
 
     // net::event_loop ev;
     // printf("POSIX:%d\n", __POSIX_VISIBLE);
 
-
+    int n_connections = 1;
     
     net::event_loop loop;
 
     std::list<net::socket> connections;
 
     for(int i = 0; i < n_connections; i ++) {
-        auto& a = connections.emplace_back(net::connect("localhost", "3003"));
-        a.on(net::socket::events::DATA, [&] (std::span<const char> s) {
+        auto& a = connections.emplace_back(net::connect("localhost", port));
+        auto iter = --connections.end();
+        a.on_data([&] (std::span<const char> s) {
             std::cout << "Server: " << std::string(s.begin(), s.end()) << std::endl;
             a.close();
         });
-        a.on(net::socket::DISCONNECT, []() {
+        a.on_disconnect([&]() {
+            connections.erase(iter);
             std::cout << "welp\n";
         });
         a << "GET / HTTP/1.0\r\n\r\n";

@@ -165,7 +165,7 @@ bool http::request_parser::parse(const std::string& str) {
     if(err == HPE_OK) {
         return finished;
     }else {
-        throw std::runtime_error(std::string(llhttp_errno_name(err)) + " " + std::string(parser.reason));
+        throw std::runtime_error(std::string(llhttp_errno_name(err)) + " " + std::string(parser.reason) + " : \"" + str + "\"");
     }
 }
 

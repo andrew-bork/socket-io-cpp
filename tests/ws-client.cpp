@@ -3,8 +3,14 @@
 #include "websocket/socket.hpp"
 #include "net/net.hpp"
 #include "net/event_loop.hpp"
-int main() {
-    net::socket sock = net::connect("localhost", 1234);
+int main(int argc, char ** argv) {
+    
+    short port = 1234;
+    if(argc >= 2) {
+        port = atoi(argv[1]);
+    }
+
+    net::socket sock = net::connect("localhost", port);
     // sock << /
 
 
@@ -34,6 +40,11 @@ int main() {
     // });
     s.set_host("localhost:1234");
     s.initiate_client_handshake();
+
+    s.on_message([](std::span<const char> data) {
+        std::string msg(data.begin(), data.end());
+        std::cout << "Message: " << msg << std::endl;
+    });
 
     // s.send("Hello world!");
 

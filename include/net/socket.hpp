@@ -54,12 +54,17 @@ namespace net {
             net::socket& operator=(net::socket&&);
             net::socket& operator=(const net::socket&);
 
+            inline void start_batch_send() {
+                batch_send = true;
+            }
 
         private:
             int _fd = -1;
 
             bool connected = false;
             bool opened = false;
+
+            bool batch_send = false;
 
             size_t _send_buffer_size = 4096;
             size_t _send_buffer_i = 0;

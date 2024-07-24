@@ -58,7 +58,8 @@ add_executable(ws-client tests/ws-client.cpp)
 target_link_libraries(ws-client websocket)
 add_executable(test-stream tests/stream.cpp)
 target_link_libraries(test-stream stream)
-
+add_executable(proxy tests/proxy.cpp)
+target_link_libraries(proxy net http)
 # add_executable(parse tests/parse.cpp)
 # add_executable(hserv tests/http_server.cpp)
 
