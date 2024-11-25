@@ -78,7 +78,7 @@ namespace net {
             ev_io_stop(_loop, &watcher);
         }
 
-        private: 
+        public: 
 
 
         

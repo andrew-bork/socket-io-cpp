@@ -20,6 +20,7 @@ int main(int argc, char ** argv) {
     s.on_open([&](){
         std::cout << "Connected!\n";
         s.send("Hello world!");
+        s.ping();
     });
     
     net::event_loop e;
@@ -41,9 +42,16 @@ int main(int argc, char ** argv) {
     s.set_host("localhost:1234");
     s.initiate_client_handshake();
 
-    s.on_message([](std::span<const char> data) {
+    s.on_message([&](std::span<const char> data) {
         std::string msg(data.begin(), data.end());
         std::cout << "Message: " << msg << std::endl;
+        s.send("Hello world!");
+    });
+
+
+    
+    s.on_pong([](std::span<const char> data) {
+        std::cout << "Pong!\n";
     });
 
     // s.send("Hello world!");

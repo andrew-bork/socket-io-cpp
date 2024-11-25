@@ -226,7 +226,6 @@ static void on_readable(EV_P_ ev_io* w, int revents) {
     ssize_t result = socket >> data;
     if(result == 0) {
         socket.handlers.on_disconnect.call();
-        // readable
         readable.handlers.on_close.call();
         socket.close();
         socket.loop()->remove_watcher(*w);

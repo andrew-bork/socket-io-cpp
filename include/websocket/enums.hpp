@@ -16,9 +16,9 @@ namespace websocket {
 
         TEXT            = 0b00000001, 
         BIN             = 0b00000010, 
-        CLOSE           = 0b00000100, 
-        PING            = 0b00000101, 
-        PONG            = 0b00000110,
-        OPCODE_MASK     = 0b00000111,
+        CLOSE           = 0b00001100, 
+        PING            = 0b00001001, 
+        PONG            = 0b00001010,
+        OPCODE_MASK     = 0b00001111,
     };
 };
